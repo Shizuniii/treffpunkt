@@ -1,0 +1,30 @@
+{
+  "name": "treffpunkt",
+  "version": "3.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Treffpunkt – gemeinsam einen Termin finden",
+  "scripts": {
+    "start": "node tools/serve.js",
+    "test": "node tests/run-unit.js",
+    "test:unit": "node tests/run-unit.js",
+    "test:ui": "node tests/ui/run-ui.js",
+    "test:rules": "firebase emulators:exec --only firestore --project demo-treffpunkt \"node --test tests/rules/rules.test.js\"",
+    "test:all": "npm run test:unit && npm run test:ui && npm run test:rules",
+    "format": "prettier --write \"js/**/*.js\" \"tests/**/*.js\" \"tools/**/*.js\" sw.js css/app.css",
+    "konto": "node tools/konto-admin.js",
+    "push-schluessel": "node tools/push-keys.js",
+    "sicherung": "node tools/backup.js",
+    "seite": "node tools/build-site.js"
+  },
+  "devDependencies": {
+    "@firebase/rules-unit-testing": "3.0.4",
+    "axe-core": "4.10.2",
+    "firebase": "10.12.2",
+    "firebase-admin": "12.7.0",
+    "firebase-tools": "13.29.1",
+    "playwright": "1.56.1",
+    "prettier": "3.3.3",
+    "web-push": "3.6.7"
+  }
+}

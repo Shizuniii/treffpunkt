@@ -1,0 +1,10 @@
+{
+  "name": "treffpunkt-tools",
+  "private": true,
+  "type": "module",
+  "description": "Nur die Pakete, die die Abläufe auf GitHub (Benachrichtigungen, Sicherung) brauchen – schlank und schnell installiert.",
+  "dependencies": {
+    "firebase-admin": "12.7.0",
+    "web-push": "3.6.7"
+  }
+}

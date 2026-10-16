@@ -1,0 +1,108 @@
+<!doctype html>
+<html lang="de">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Treffpunkt · Tests</title>
+<!-- Testseite: führt die Unit-Tests direkt im Browser aus.
+     Aufruf: …/tests/   oder   …/tests/?f=Auswertung  (nur passende Gruppen/Tests) -->
+<style>
+  :root { --bg:#f6f4ef; --card:#fff; --ink:#1f2330; --muted:#6b7080; --line:#e4e1d8; --ok:#1f8a4c; --bad:#c23b32; --acc:#3b5bdb; }
+  @media (prefers-color-scheme: dark) {
+    :root { --bg:#14161c; --card:#1d2029; --ink:#e9e9ee; --muted:#9aa0b0; --line:#2c303b; --ok:#4cc27e; --bad:#ff6b5f; --acc:#7c96ff; }
+  }
+  * { box-sizing: border-box; }
+  body { margin:0; background:var(--bg); color:var(--ink); font:15px/1.45 system-ui, -apple-system, "Segoe UI", sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 20px 16px 60px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  p.sub { color: var(--muted); margin: 0 0 16px; }
+  .bar { display:flex; flex-wrap:wrap; gap:8px; align-items:center; margin-bottom:16px; }
+  input[type=search] { flex:1 1 200px; min-width:0; padding:9px 12px; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--ink); font:inherit; }
+  button { padding:9px 14px; border:1px solid var(--line); border-radius:10px; background:var(--card); color:var(--ink); font:inherit; cursor:pointer; }
+  button.primary { background:var(--acc); border-color:var(--acc); color:#fff; }
+  .sum { padding:12px 14px; border-radius:12px; margin-bottom:14px; font-weight:600; background:var(--card); border:1px solid var(--line); }
+  .sum.ok { border-color:var(--ok); color:var(--ok); }
+  .sum.bad { border-color:var(--bad); color:var(--bad); }
+  .suite { background:var(--card); border:1px solid var(--line); border-radius:12px; margin-bottom:10px; overflow:hidden; }
+  .suite header { display:flex; align-items:center; gap:8px; padding:10px 12px; border-bottom:1px solid var(--line); }
+  .suite header b { flex:1; }
+  .suite header button { padding:5px 10px; font-size:13px; }
+  .count { font-size:13px; color:var(--muted); }
+  ul { list-style:none; margin:0; padding:4px 0; }
+  li { padding:5px 12px; display:flex; gap:8px; align-items:baseline; }
+  li .ic { width:1.2em; flex:none; text-align:center; }
+  li.ok .ic { color:var(--ok); } li.bad .ic { color:var(--bad); } li.wait .ic { color:var(--muted); }
+  li .name { flex:1; min-width:0; }
+  li .err { display:block; color:var(--bad); font-size:13px; overflow-wrap:anywhere; }
+  li .ms { color:var(--muted); font-size:12px; }
+  a { color:var(--acc); }
+</style>
+</head>
+<body>
+<main>
+  <h1>🧪 Treffpunkt – Tests</h1>
+  <p class="sub">Prüft die Rechen-Logik der App (Datum, Feiertage, Verfügbarkeit, Auswertung, Suche, Optionen …) einzeln. Nichts davon ändert Daten. <a href="../">← zur App</a></p>
+  <div class="bar">
+    <input type="search" id="q" placeholder="Filter, z. B. „Auswertung“ oder „Feiertage“">
+    <button class="primary" id="run">Alle ausführen</button>
+  </div>
+  <div id="sum" class="sum">Lade Tests …</div>
+  <div id="list"></div>
+</main>
+<script type="module">
+  import './unit/all.js';
+  import { getSuites, runSuites } from './lib/mini-test.js';
+
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s).replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+  const key = (s, t) => s + ' › ' + t;
+
+  function draw(filter) {
+    const f = filter.toLowerCase();
+    $('#list').innerHTML = getSuites().map((s, i) => {
+      const tests = s.tests.filter(t => !f || s.name.toLowerCase().includes(f) || t.name.toLowerCase().includes(f));
+      if (!tests.length) return '';
+      return `<section class="suite"><header><b>${esc(s.name)}</b><span class="count" data-count="${i}"></span>
+        <button data-suite="${esc(s.name)}">▶ nur diese</button></header>
+        <ul>${tests.map(t => `<li class="wait" data-k="${esc(key(s.name, t.name))}"><span class="ic">•</span><span class="name">${esc(t.name)}</span><span class="ms"></span></li>`).join('')}</ul></section>`;
+    }).join('');
+  }
+
+  async function run(filter) {
+    draw(filter);
+    $('#sum').className = 'sum'; $('#sum').textContent = 'Läuft …';
+    const res = await runSuites(filter, r => {
+      const li = [...document.querySelectorAll('li[data-k]')].find(x => x.dataset.k === key(r.suite, r.test));
+      if (!li) return;
+      li.className = r.ok ? 'ok' : 'bad';
+      li.querySelector('.ic').textContent = r.ok ? '✓' : '✗';
+      li.querySelector('.ms').textContent = r.ms ? r.ms + ' ms' : '';
+      if (!r.ok) li.querySelector('.name').insertAdjacentHTML('beforeend', `<span class="err">${esc(r.error)}</span>`);
+    });
+    getSuites().forEach((s, i) => {
+      const el = document.querySelector(`[data-count="${i}"]`); if (!el) return;
+      const mine = res.filter(r => r.suite === s.name);
+      el.textContent = `${mine.filter(r => r.ok).length}/${mine.length}`;
+    });
+    const bad = res.filter(r => !r.ok).length;
+    $('#sum').className = 'sum ' + (bad ? 'bad' : 'ok');
+    $('#sum').textContent = res.length === 0 ? 'Kein Test passt zum Filter.'
+      : bad ? `✗ ${bad} von ${res.length} Tests fehlgeschlagen` : `✓ Alle ${res.length} Tests bestanden`;
+    const u = new URL(location.href);
+    filter ? u.searchParams.set('f', filter) : u.searchParams.delete('f');
+    history.replaceState(null, '', u);
+    window.__testResults = res; // für automatische UI-Tests
+  }
+
+  $('#run').onclick = () => run($('#q').value.trim());
+  $('#q').addEventListener('keydown', e => { if (e.key === 'Enter') run($('#q').value.trim()); });
+  $('#list').addEventListener('click', e => {
+    const b = e.target.closest('[data-suite]'); if (!b) return;
+    $('#q').value = b.dataset.suite; run(b.dataset.suite);
+  });
+  const start = new URL(location.href).searchParams.get('f') || '';
+  $('#q').value = start;
+  run(start);
+</script>
+</body>
+</html>
