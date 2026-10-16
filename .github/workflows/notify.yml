@@ -1,0 +1,60 @@
+# Alle 15 Minuten: fällige Benachrichtigungen verschicken (Discord, Push) und Kalender-Abos aktualisieren.
+# Nichts eingerichtet (kein FIREBASE_SERVICE_ACCOUNT)? Dann passiert einfach nichts.
+name: Benachrichtigungen
+
+on:
+  schedule:
+    - cron: '*/15 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: notify
+  cancel-in-progress: false
+
+jobs:
+  send:
+    runs-on: ubuntu-latest
+    outputs:
+      cal_changed: ${{ steps.run.outputs.cal_changed }}
+    env:
+      SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+    steps:
+      - name: Nicht eingerichtet?
+        if: env.SA == ''
+        run: echo "::notice::Benachrichtigungen sind nicht eingerichtet (Secret FIREBASE_SERVICE_ACCOUNT fehlt)."
+      - uses: actions/checkout@v4
+        if: env.SA != ''
+      - uses: actions/setup-node@v4
+        if: env.SA != ''
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/package-lock.json
+      - if: env.SA != ''
+        run: npm ci --prefix tools --no-audit --no-fund
+      - id: run
+        if: env.SA != ''
+        run: |
+          export SITE_URL="${SITE_URL:-https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}/}"
+          node tools/notify.js
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          VAPID_PUBLIC_KEY: ${{ vars.VAPID_PUBLIC_KEY }}
+          VAPID_PRIVATE_KEY: ${{ secrets.VAPID_PRIVATE_KEY }}
+          SITE_URL: ${{ vars.SITE_URL }}
+          CAL_DIR: _cal
+
+  # Kalender-Abos haben sich geändert → Seite neu veröffentlichen, damit die .ics-Dateien aktuell sind
+  publish:
+    needs: send
+    if: needs.send.outputs.cal_changed == 'true'
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/publish.yml
+    secrets: inherit

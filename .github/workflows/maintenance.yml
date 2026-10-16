@@ -1,0 +1,45 @@
+# Einmal im Monat: Reichen die Schulferien noch? Gibt es eine neuere Firebase-Version? Laufen alle Unit-Tests?
+# Findet der Check etwas, legt er ein GitHub-Issue „Wartung nötig“ an (oder ergänzt das offene) – GitHub schickt dir dazu eine E-Mail.
+name: Wartung
+
+on:
+  schedule:
+    - cron: '23 5 1 * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - id: check
+        run: node tools/check-updates.js
+      - id: tests
+        run: |
+          if node tests/run-unit.js > unit.txt 2>&1; then echo "failed=false" >> "$GITHUB_OUTPUT"; else echo "failed=true" >> "$GITHUB_OUTPUT"; fi
+          tail -5 unit.txt
+      - name: Issue anlegen oder ergänzen
+        if: steps.check.outputs.found == 'true' || steps.tests.outputs.failed == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          BODY: ${{ steps.check.outputs.body }}
+          FAILED: ${{ steps.tests.outputs.failed }}
+        run: |
+          {
+            echo "Der monatliche Wartungs-Check hat etwas gefunden:"
+            echo
+            echo "$BODY"
+            if [ "$FAILED" = "true" ]; then echo "- ❌ Einige Unit-Tests schlagen fehl:"; echo '```'; grep -E "✗|→" unit.txt | head -20; echo '```'; fi
+            echo
+            echo "Schick den Text gern an Claude – dann wird es angepasst."
+          } > body.md
+          gh label create wartung --color FBCA04 --description "Treffpunkt-Wartung" --force >/dev/null 2>&1 || true
+          N=$(gh issue list --label wartung --state open --json number -q '.[0].number')
+          if [ -n "$N" ]; then gh issue comment "$N" --body-file body.md; else gh issue create --title "🔧 Treffpunkt: Wartung nötig" --label wartung --body-file body.md; fi

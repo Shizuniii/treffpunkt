@@ -1,0 +1,55 @@
+# Baut die Seite und veröffentlicht sie auf GitHub Pages. Wird von „Tests & Veröffentlichen“ (nach grünen Tests)
+# und von „Benachrichtigungen“ (wenn sich Kalender-Abos geändert haben) aufgerufen – oder per Hand.
+# Voraussetzung: Settings → Pages → Source: „GitHub Actions“.
+name: Veröffentlichen
+
+on:
+  workflow_call:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+jobs:
+  site:
+    runs-on: ubuntu-latest
+    concurrency:
+      group: pages
+      cancel-in-progress: false
+    environment:
+      name: github-pages
+      url: ${{ steps.deploy.outputs.page_url }}
+    env:
+      SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Kalender-Abos erzeugen
+        if: env.SA != ''
+        run: |
+          npm ci --prefix tools --no-audit --no-fund
+          export SITE_URL="${SITE_URL:-https://${GITHUB_REPOSITORY_OWNER,,}.github.io/${GITHUB_REPOSITORY#*/}/}"
+          node tools/notify.js --calendars-only
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          SITE_URL: ${{ vars.SITE_URL }}
+          CAL_DIR: _cal
+      - name: Seite bauen
+        run: node tools/build-site.js
+        env:
+          OUT: _site
+          CAL_DIR: _cal
+          FIREBASE_CONFIG: ${{ vars.FIREBASE_CONFIG }}
+          DISCORD_CLIENT_ID: ${{ vars.DISCORD_CLIENT_ID }}
+          VAPID_PUBLIC_KEY: ${{ vars.VAPID_PUBLIC_KEY }}
+          CALENDAR: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
+      - uses: actions/configure-pages@v5
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+      - id: deploy
+        uses: actions/deploy-pages@v4

@@ -1,0 +1,57 @@
+# Jeden Sonntag: verschlüsselte Sicherung der Datenbank (90 Tage aufbewahrt unter „Actions → Sicherung → Artifacts“).
+# Ohne das Passwort (Secret BACKUP_PASSWORD) ist die Datei unlesbar – wichtig, weil das Repository öffentlich ist.
+# Außerdem hält dieser Ablauf die zeitgesteuerten Abläufe aktiv (GitHub pausiert sie sonst nach 60 Tagen ohne Änderungen).
+name: Sicherung
+
+on:
+  schedule:
+    - cron: '17 3 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    env:
+      SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+      PW: ${{ secrets.BACKUP_PASSWORD }}
+    steps:
+      - name: Nicht eingerichtet?
+        if: env.SA == '' || env.PW == ''
+        run: echo "::notice::Sicherung nicht eingerichtet (Secrets FIREBASE_SERVICE_ACCOUNT und BACKUP_PASSWORD nötig)."
+      - uses: actions/checkout@v4
+        if: env.SA != '' && env.PW != ''
+      - uses: actions/setup-node@v4
+        if: env.SA != '' && env.PW != ''
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/package-lock.json
+      - if: env.SA != '' && env.PW != ''
+        run: npm ci --prefix tools --no-audit --no-fund
+      - if: env.SA != '' && env.PW != ''
+        run: node tools/backup.js export --out sicherung.enc
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+          BACKUP_PASSWORD: ${{ secrets.BACKUP_PASSWORD }}
+      - uses: actions/upload-artifact@v4
+        if: env.SA != '' && env.PW != ''
+        with:
+          name: sicherung-${{ github.run_number }}
+          path: sicherung.enc
+          retention-days: 90
+
+  keepalive:
+    runs-on: ubuntu-latest
+    permissions:
+      actions: write
+    steps:
+      - name: Zeitgesteuerte Abläufe aktiv halten
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          for wf in notify.yml backup.yml maintenance.yml; do
+            gh api -X PUT "repos/${{ github.repository }}/actions/workflows/$wf/enable" && echo "$wf aktiv" || echo "$wf: nicht gefunden"
+          done
