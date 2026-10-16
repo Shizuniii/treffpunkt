@@ -42,7 +42,7 @@ export function sheetNotify() {
     n = notifyDraft();
   let h = sheetHead('🔔 Benachrichtigungen');
   if (s.loading) return h + '<p class="muted">Lädt …</p>';
-  h += `<p class="small muted">Ganz freiwillig: Treffpunkt meldet sich nur über die Wege, die du hier einschaltest. Nachrichten kommen mit etwa 15 Minuten Verzögerung.${DEMO ? ' <b>Demo:</b> Hier wird nur so getan, als ob.' : ''}</p>`;
+  h += `<p class="small muted">Ganz freiwillig: 'Treffpunkt' meldet sich nur über die Wege, die du hier einschaltest. Nachrichten kommen mit etwa 15 Minuten Verzögerung.${DEMO ? ' <b>Demo:</b> Hier wird nur so getan, als ob.' : ''}</p>`;
   if (B.isAnon())
     h += `<div class="banner info"><span>Gilt für dieses Gerät. Mit einem Konto gilt es überall. <button class="linkbtn" data-act="acc-open">Konto</button></span></div>`;
 
@@ -52,7 +52,7 @@ export function sheetNotify() {
     h += `<div class="nf-row"><div class="stack" style="gap:2px;min-width:0"><b>💬 Discord</b><span class="small muted">${
       n.discord
         ? `Verbunden als <b>${esc(n.discord.name || 'Discord')}</b> – Nachrichten kommen als Direktnachricht vom Treffpunkt-Bot.`
-        : 'Direktnachricht vom Treffpunkt-Bot. Du musst dafür auf dem Discord-Server sein, auf dem der Bot ist.'
+        : 'Direktnachricht vom Treffpunkt-Bot. Du musst dafür auf dem Discord-Server sein, auf dem der Bot ist. (existiert noch nicht)'
     }</span></div>${n.discord ? `<button class="btn sm ghost" data-act="nf-discord-off">Trennen</button>` : `<button class="btn sm primary" data-act="nf-discord">Verbinden</button>`}</div>
     ${n.discordError ? `<div class="banner warn"><span>${esc(n.discordError)}</span></div>` : ''}`;
   // Push
