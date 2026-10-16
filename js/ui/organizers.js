@@ -35,7 +35,7 @@ export function sheetAdmins() {
     me = myAdmin(),
     confirm = S.sheet.confirm;
   let h = sheetHead('Organisatoren');
-  h += `<p class="small muted">Ganz optional: Mitorganisatoren sehen alle Events und Antworten und können alles bearbeiten, genau wie du. Die Leitung verwaltet zusätzlich, wer Organisator ist.</p>`;
+  h += `<p class="small muted">Ganz optional: Mitorganisatoren sehen alle Events und Antworten und können alles bearbeiten</p>`;
   if (confirm) {
     const who = list.find(a => a.email === confirm) || {};
     h += `<div class="banner warn" role="alert"><span>Leitung wirklich an <b>${esc(who.name || who.email)}</b> übergeben? Du bleibst Mitorganisator.</span>
