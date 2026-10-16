@@ -26,9 +26,9 @@ export function sheetCancel() {
     if (s.reason === 'sick')
       h += `<div class="banner ok">Gute Besserung! Verständlicher Grund, kein Drink fällig 🍵</div>`;
     if (s.reason === 'other')
-      h += `<div class="banner warn">Absage-Regel: Du schuldest beim Treffen jedem aus der Gruppe einen Drink seiner Wahl${N ? ` (${N} Drinks 🍹)` : ' 🍹'}. Ehrensache.</div>`;
+      h += `<div class="banner warn">Der Council muss entscheiden. Gib deine Begründung in der WhatsApp Gruppe an</div>`;
   }
-  h += `<label class="field">Nachricht an den Organisator <span class="muted small" style="font-weight:400">(optional)</span><input type="text" id="cx-note" maxlength="120" placeholder="z. B. Sorry, Familienfeier" value="${esc(s.note || '')}"></label>`;
+  h += `<label class="field">Nachricht an Selim<span class="muted small" style="font-weight:400">(optional)</span><input type="text" id="cx-note" maxlength="120" placeholder="z. B. Sorry, Familienfeier" value="${esc(s.note || '')}"></label>`;
   const ready = !late || !rule || s.reason;
   return (
     h +
