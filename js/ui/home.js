@@ -182,7 +182,7 @@ export function pollForm() {
       <div class="seg full three" role="group" aria-label="Neue Zeiträume"><button data-act="pf-addmode" data-v="auto" class="${e.addMode === 'auto' ? 'on' : ''}">Zeitraum direkt hinzufügen</button><button data-act="pf-addmode" data-v="ask" class="${e.addMode === 'ask' ? 'on' : ''}">Erst ich bestätige</button><button data-act="pf-addmode" data-v="off" class="${e.addMode === 'off' ? 'on' : ''}">Nicht erlauben</button></div>
       <span class="small muted">${e.addMode === 'off' ? 'Teilnehmer können keine neuen Zeiträume vorschlagen.' : 'Teilnehmer können angeben, wann sie als Nächstes können. Alle anderen sehen dann einen Hinweis und können für die neuen Tage abstimmen.'}</span></div>
     <div class="stack" style="gap:4px"><label class="check"><input type="checkbox" id="pf-cancel" ${e.cancelRule ? 'checked' : ''}> 🍻 Absage-Regel anzeigen</label>
-      <span class="small muted">Wer beim festgelegten Termin nicht spätestens 1 Woche vorher absagt (außer z. B. bei Krankheit), schuldet jedem aus der Gruppe einen Drink.</span></div>
+      <span class="small muted">Wer beim festgelegten Termin nicht spätestens 1 Woche vorher absagt (außer z. B. bei Krankheit), schuldet jedem aus der Gruppe einen Drink seiner Wahl.</span></div>
     </div></details>
     <p class="small muted">Mit der Anzahl erkennt die Auswertung, ob alle abgestimmt haben. Monate kannst du später ändern, bisherige Antworten bleiben erhalten.</p>
     <div class="row"><button class="btn primary" data-act="pf-save">${e.id ? 'Speichern' : 'Erstellen'}</button><button class="btn ghost" data-act="pf-cancel">Abbrechen</button></div></div>`;
