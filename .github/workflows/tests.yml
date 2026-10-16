@@ -1,1 +1,109 @@
+# Bei jedem Hochladen: alle Tests. Auf dem Hauptzweig danach automatisch veröffentlichen –
+# erst die Sicherheitsregeln (Firebase), dann die App (GitHub Pages). Aber nur, wenn alle Tests grün sind.
+# Ergebnis: im Repository unter „Actions“ (grüner Haken oder rotes X).
+name: Tests & Veröffentlichen
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch: # „Run workflow“-Knopf unter Actions
+
+permissions:
+  contents: read
+
+jobs:
+  unit:
+    name: Rechen-Logik (Unit-Tests)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - run: node tests/run-unit.js
+
+  ui:
+    name: Bedienung (UI-Tests im Browser)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npx playwright install --with-deps chromium
+      - run: mkdir -p ui-shots && npm run test:ui
+        env:
+          UI_SHOTS: ui-shots
+      - uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: ui-screenshots
+          path: ui-shots
+
+  rules:
+    name: Sicherheitsregeln (Firestore-Emulator)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Hinweis, falls firestore.rules nicht hochgeladen wurde
+        if: hashFiles('firestore.rules') == ''
+        run: echo "::notice::firestore.rules liegt nicht im Repository – Regel-Tests übersprungen."
+      - uses: actions/setup-node@v4
+        if: hashFiles('firestore.rules') != ''
+        with:
+          node-version: 22
+          cache: npm
+      - uses: actions/setup-java@v4
+        if: hashFiles('firestore.rules') != ''
+        with:
+          distribution: temurin
+          java-version: 21
+      - uses: actions/cache@v4
+        if: hashFiles('firestore.rules') != ''
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ hashFiles('package-lock.json') }}
+      - run: npm ci --no-audit --no-fund
+        if: hashFiles('firestore.rules') != ''
+      - run: npm run test:rules
+        if: hashFiles('firestore.rules') != ''
+
+  publish-rules:
+    name: Sicherheitsregeln veröffentlichen
+    needs: [unit, ui, rules]
+    if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
+    runs-on: ubuntu-latest
+    env:
+      SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Übersprungen?
+        if: env.SA == '' || hashFiles('firestore.rules') == ''
+        run: echo "::notice::Regeln nicht automatisch veröffentlicht (FIREBASE_SERVICE_ACCOUNT oder firestore.rules fehlt) – dann bitte per Hand in der Firebase-Konsole einfügen."
+      - uses: actions/setup-node@v4
+        if: env.SA != '' && hashFiles('firestore.rules') != ''
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: tools/package-lock.json
+      - name: Regeln nach Firebase
+        if: env.SA != '' && hashFiles('firestore.rules') != ''
+        run: |
+          npm ci --prefix tools --no-audit --no-fund
+          node tools/deploy-rules.js
+        env:
+          FIREBASE_SERVICE_ACCOUNT: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
+
+  publish:
+    name: App veröffentlichen
+    needs: [publish-rules]
+    if: github.event_name != 'pull_request' && github.ref_name == github.event.repository.default_branch
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    uses: ./.github/workflows/publish.yml
+    secrets: inherit
 
