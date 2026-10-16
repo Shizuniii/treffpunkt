@@ -33,7 +33,7 @@ export function sheetPropose() {
     return monthKey(d.getFullYear(), d.getMonth() + 1);
   });
   let h = sheetHead('Neuen Zeitraum vorschlagen');
-  h += `<p class="small muted">${s.fromDone ? 'Du hast an keinem einzigen Tag Zeit eingetragen. ' : ''}Sag, wann du als Nächstes kannst. ${mode === 'auto' ? 'Der Zeitraum wird sofort hinzugefügt, und alle anderen sehen beim nächsten Öffnen einen Hinweis, damit sie auch dafür abstimmen.' : 'Der Organisator bestätigt den Vorschlag, danach können alle dafür abstimmen.'}</p>`;
+  h += `<p class="small muted">${s.fromDone ? 'Du hast an keinem einzigen Tag Zeit eingetragen. ' : ''}Sag, wann du als Nächstes kannst. ${mode === 'auto' ? 'Der Zeitraum wird sofort hinzugefügt, und alle anderen sehen beim nächsten Öffnen einen Hinweis, damit sie auch dafür abstimmen.' : 'Der Organisator (Selim) bestätigt den Vorschlag, danach können alle dafür abstimmen.'}</p>`;
   if (mine && !mine.declined)
     h += `<div class="banner info">Dein bisheriger Vorschlag: ${rangeText(mine.from, mine.to)} · ${mine.ok ? 'hinzugefügt' : 'wartet auf Bestätigung'}. Ein neuer Vorschlag ersetzt ihn.</div>`;
   h += `<div class="chips">${nextMonths.map(k => `<button class="chip" data-act="pr-month" data-v="${k}">${monthLabel(k)}</button>`).join('')}</div>
@@ -85,7 +85,7 @@ export async function sendProposal() {
     info:
       mode === 'auto'
         ? 'Trag jetzt ein, wann du in diesem Zeitraum kannst. Sag der Gruppe kurz Bescheid:'
-        : 'Sobald der Organisator bestätigt, erscheint der Zeitraum für alle. Sag der Gruppe ruhig schon Bescheid:',
+        : 'Sobald der Organisator (Mom Spaghetti) bestätigt, erscheint der Zeitraum für alle. Sag der Gruppe ruhig schon Bescheid:',
     text: `Ich kann bei „${p.title}“ im bisherigen Zeitraum leider an keinem Tag. ${mode === 'auto' ? `Ich habe ${r} hinzugefügt` : `Ich habe ${r} als neuen Zeitraum vorgeschlagen`}. Tragt bitte auch dafür ein, wann ihr könnt: ${voteLink(S.route.ids)}`,
   };
   render();
