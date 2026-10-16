@@ -45,7 +45,7 @@ function anonView(s) {
   const create = s.mode !== 'login';
   const suggestion = s.user ?? (create ? suggestUser((S.my && S.my.name) || (S.member && S.member.name) || '') : '');
   let h = sheetHead('Mit Konto auf jedem Gerät');
-  h += `<p class="small muted">Ohne Konto sind deine Antworten nur in diesem Browser gespeichert. Mit einem Konto meldest du dich auf jedem Handy oder PC an und siehst überall dasselbe. Ganz freiwillig.</p>
+  h += `<p class="small muted">Ohne Konto sind deine Antworten nur in diesem Browser gespeichert. Mit einem Konto meldest du dich auf jedem Handy oder PC an und siehst überall dasselbe.</p>
     <div class="seg full" role="group" aria-label="Konto">
       <button type="button" data-act="acc-mode" data-v="create" class="${create ? 'on' : ''}">Neues Konto</button>
       <button type="button" data-act="acc-mode" data-v="login" class="${create ? '' : 'on'}">Ich habe schon eins</button></div>
@@ -55,7 +55,7 @@ function anonView(s) {
       ${userInput(s, 'Benutzername', suggestion)}
       ${pwInput(s, 'Passwort <span class="muted small" style="font-weight:400">(mindestens 6 Zeichen)</span>', 'new-password')}
       <div><button type="submit" class="btn primary" ${busy(s)}>${s.busy ? 'Moment …' : 'Konto anlegen'}</button></div></form>
-      <p class="small muted">Statt eines Benutzernamens geht auch deine E-Mail-Adresse – dann kannst du ein vergessenes Passwort selbst zurücksetzen. Deine bisherigen Antworten auf diesem Gerät gehören danach zu deinem Konto. Der Organisator sieht deinen Benutzernamen, aber nie dein Passwort.</p>`;
+      <p class="small muted">Statt eines Benutzernamens geht auch deine E-Mail-Adresse (dann kannst du ein vergessenes Passwort selbst zurücksetzen). Deine bisherigen Antworten auf diesem Gerät gehören danach zu deinem Konto. Der Organisator (meist vermutlich Selim) sieht deinen Benutzernamen, aber nie dein Passwort (trust).</p>`;
   else
     h += `<form class="stack" data-submit="acc-login" novalidate>
       ${userInput(s, 'Benutzername oder E-Mail', suggestion)}
@@ -74,7 +74,7 @@ function forgotView(s) {
       ${userInput(s, 'Benutzername oder E-Mail', s.user || '')}
       <div><button type="submit" class="btn primary" ${busy(s)}>Weiter</button></div></form>`;
   if (s.info === 'pseudo')
-    h += `<div class="banner info"><span>Bei einem Konto mit Benutzernamen (ohne E-Mail) kann nur der Organisator ein neues Passwort setzen. Schreib ihm kurz deinen Benutzernamen – du bekommst dann ein neues.</span></div>`;
+    h += `<div class="banner info"><span>Bei einem Konto mit Benutzernamen (ohne E-Mail). Schreib Selim kurz deinen Benutzernamen und du bekommst dann ein neues.</span></div>`;
   if (s.info === 'sent')
     h += `<div class="banner ok"><span>Wenn es ein Konto mit dieser Adresse gibt, ist jetzt eine E-Mail mit einem Link zum Zurücksetzen unterwegs. Schau auch im Spam-Ordner.</span></div>`;
   return (
@@ -100,7 +100,7 @@ function createdView(s) {
   return `${sheetHead('Konto angelegt 🎉')}
     <p>Dein Benutzername: <b>${esc(s.user)}</b></p>
     <p class="small muted">Am anderen Handy oder PC: den Treffpunkt-Link öffnen, unter deinem Namen auf „Mit Konto auf jedem Gerät abstimmen“ tippen, dann „Ich habe schon eins“.
-    ${s.real ? 'Passwort vergessen? Das setzt du über deine E-Mail selbst zurück.' : 'Merk dir dein Passwort gut (am besten im Passwort-Manager speichern). Vergessen? Dann kann dir nur der Organisator ein neues setzen.'}</p>
+    ${s.real ? 'Passwort vergessen? Das setzt du über deine E-Mail selbst zurück.' : 'Merk dir dein Passwort gut (am besten im Passwort-Manager speichern). Vergessen? Dann kann nur Selim ein neues setzen.'}</p>
     <div><button type="button" class="btn primary" data-act="close-sheet">Alles klar</button></div>`;
 }
 
