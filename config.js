@@ -1,19 +1,15 @@
 // Treffpunkt – Einstellungen
-// Solange hier noch "DEIN_..." steht, läuft die App im Demo-Modus (Daten nur im eigenen Browser).
-// Schritt 4 der Anleitung erklärt, woher du diese Werte bekommst.
-// Wer Organisator ist, steht NICHT hier, sondern in Firestore in der Sammlung „admins“ (siehe ANLEITUNG).
-// Tipp: Mit automatischem Veröffentlichen über GitHub (ANLEITUNG, Teil B) wird diese Datei beim Veröffentlichen
-// aus den GitHub-Einstellungen erzeugt – dann musst du hier gar nichts eintragen.
+// Wer Organisator ist, steht NICHT hier, sondern in Firestore in der Sammlung „admins“
 
 window.TREFFPUNKT_CONFIG = {
   // Aus der Firebase-Konsole: Projekteinstellungen → Allgemein → Meine Apps → Web-App → "Konfiguration"
   firebase: {
-    apiKey: "DEIN_API_KEY",
-    authDomain: "DEIN-PROJEKT.firebaseapp.com",
-    projectId: "DEIN-PROJEKT",
-    storageBucket: "DEIN-PROJEKT.appspot.com",
-    messagingSenderId: "000000000000",
-    appId: "1:000000000000:web:0000000000000000"
+    apiKey: "AIzaSyDjs8PuvcoovoEVj0p-L3zQgo8UQ4WgzfI",
+    authDomain: "stalker-6767.firebaseapp.com",
+    projectId: "stalker-6767",
+    storageBucket: "stalker-6767.firebasestorage.app",
+    messagingSenderId: "1080315582208",
+    appId: "1:1080315582208:web:4964ddd64cdcf2fbf545e5"
   },
   // Optional – Benachrichtigungen (ANLEITUNG, Teil C). Leer lassen = ausgeschaltet.
   discordClientId: "",   // Discord: „Application ID“ deiner Discord-App
