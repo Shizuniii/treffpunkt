@@ -16,7 +16,7 @@ concurrency:
 
 jobs:
   send:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     outputs:
       cal_changed: ${{ steps.run.outputs.cal_changed }}
     env:
@@ -25,9 +25,9 @@ jobs:
       - name: Nicht eingerichtet?
         if: env.SA == ''
         run: echo "::notice::Benachrichtigungen sind nicht eingerichtet (Secret FIREBASE_SERVICE_ACCOUNT fehlt)."
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
         if: env.SA != ''
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v5
         if: env.SA != ''
         with:
           node-version: 22

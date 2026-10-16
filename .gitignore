@@ -1,0 +1,12 @@
+node_modules/
+ui-shots/
+*.log
+.firebase/
+# Admin-Schlüssel für tools/konto-admin.js – GEHEIM, nie hochladen
+admin-schluessel.json
+*firebase-adminsdk*.json
+tools/node_modules/
+_site/
+_cal/
+sicherung-*.enc
+sicherung-*.json

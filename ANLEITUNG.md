@@ -30,37 +30,47 @@ Links **Build → Authentication → Jetzt starten**, dann Tab **Sign-in method*
 ### A3. Datenbank, Regeln und dich als Organisator eintragen
 1. Links **Build → Firestore Database → Datenbank erstellen** → Standort **eur3 (Europe)** → **Im Produktionsmodus starten** → Erstellen.
 2. **Dich als Organisator eintragen** (Tab **Daten**):
-   **+ Sammlung starten** → Sammlungs-ID `admins` → Weiter →
-   **Dokument-ID:** deine Google-Adresse, **klein geschrieben** (z. B. `name@gmail.com`) →
-   Feld `role`, Typ **string**, Wert `owner` → **Speichern**.
+   **+ Sammlung starten** (Fenster „Eine Sammlung erstellen“) → Sammlungs-ID `admins` → Weiter →
+   **Dokument-ID:** deine Google-Adresse, **klein geschrieben** (z. B. `name@gmail.com`) – nicht auf „Automatische ID“ klicken →
+   **Feld:** `role` → **Typ:** `string` (Voreinstellung, so lassen) → im Kästchen darunter mit der Überschrift **String:** `owner` → **Speichern**.
 3. Tab **Regeln** → alles löschen → Inhalt von `firestore.rules` einfügen → **Veröffentlichen**.
    (Mit Teil B passiert das künftig automatisch.)
 
 Die Regeln sorgen dafür, dass jeder Freund nur seine eigene Antwort sieht, nur Organisatoren alle Antworten sehen, nach Fristende niemand mehr ändern kann und private Daten (Event-Liste, Benachrichtigungs-Einstellungen) nur für die Person selbst lesbar sind. Deine E-Mail-Adresse steht seit Version 3 **nicht mehr** in `firestore.rules` – die Datei kann also bedenkenlos auf GitHub.
 
 ### A4. Web-App registrieren
-1. **Zahnrad → Projekteinstellungen** → unten bei **Meine Apps** auf **`</>`** (Web).
+1. **Zahnrad → Projekteinstellungen** (oder oben in der Suche „Allgemein“ wählen) → Tab **Allgemein** → ganz unten bei **Meine Apps** auf **`</>`** (Web).
+   Nicht „App Hosting“, „Hosting“ oder „App Check“ – die brauchst du nicht.
 2. Spitzname `Treffpunkt` → **App registrieren** (Firebase Hosting **nicht** anhaken).
 3. Den Block `const firebaseConfig = { apiKey: "...", ... };` kopieren und aufheben – du brauchst ihn in A5 (oder in B2).
    Der `apiKey` darf öffentlich sein, das ist bei Firebase normal. Geschützt wird alles durch die Regeln.
 
 ### A5. Auf GitHub hochladen
+**Teil 1 – Dateien hochladen**
 1. https://github.com → **+ → New repository** → Name `treffpunkt`, **Public** → **Create repository**.
-2. **uploading an existing file** → **alle** Dateien und Ordner aus dem entpackten Paket hineinziehen (auch `.github`, `tools`, `tests`) → **Commit changes**.
-   - Auf dem Mac ist der Ordner `.github` versteckt: im Finder **⌘ + ⇧ + .** drücken.
-   - **Nicht** hochladen: `node_modules` (falls vorhanden) und `admin-schluessel.json` (falls du sie angelegt hast).
-3. **Mit Teil B (empfohlen):** `config.js` bleibt, wie sie ist – die echten Werte kommen aus den GitHub-Einstellungen (B2).
-   **Ohne Teil B:** `config.js` vor dem Hochladen in einem Texteditor öffnen und die Platzhalter (`DEIN_API_KEY` usw.) durch die Werte aus A4 ersetzen.
+2. Auf der leeren Repository-Seite im Satz „Get started by …“ auf den blauen Link **uploading an existing file** klicken.
+3. Auf deinem PC den entpackten Ordner öffnen. Du siehst darin direkt `css`, `js`, `tests`, `tools`, `config.js`, `index.html` usw.
+4. Im Ordner **Strg + A** (Mac: ⌘ + A) → alles zusammen ins Browserfenster ziehen.
+5. Warten, bis die Liste fertig ist. GitHub zeigt **96 Dateien** – das stimmt so. (Dateien, deren Name mit einem Punkt beginnt, lässt GitHub dabei weg; die braucht die App nicht.)
+6. Nach unten scrollen → grüner Knopf **Commit changes**.
+
+**Teil 2 – Firebase-Werte eintragen**
+7. Du siehst jetzt die Dateiliste deines Repositorys → auf **`config.js`** klicken.
+8. Rechts oben über dem Text auf den **Stift** klicken („Edit this file“).
+9. Diese sechs Zeilen markieren: von `apiKey: "DEIN_API_KEY",` bis `appId: "1:000000000000:web:0000000000000000"`.
+10. Durch die sechs Zeilen aus deinem Block von A4 ersetzen – nur die Zeilen **zwischen** `const firebaseConfig = {` und `};`. Die Zeilen `firebase: {` darüber und `},` darunter bleiben stehen.
+11. Rechts oben **Commit changes…** → im Fenster **Commit changes**.
+
+Diese Werte dürfen öffentlich sein, das ist bei Firebase normal – geschützt wird alles durch die Regeln aus A3.
 
 ### A6. GitHub Pages einschalten
-Im Repository **Settings → Pages** → bei *Source*:
-- **Mit Teil B:** **GitHub Actions** wählen. Weiter mit Teil B – die Seite erscheint, sobald B2 erledigt ist.
-- **Ohne Teil B:** **Deploy from a branch** → Branch **main**, Ordner **/ (root)** → **Save**.
+Im Repository **Settings → Pages** → bei *Source* **Deploy from a branch** → Branch **main**, Ordner **/ (root)** → **Save**.
 
 Nach 1–2 Minuten ist die App unter `https://DEINNAME.github.io/treffpunkt/` erreichbar.
 
 ### A7. Domain bei Firebase freigeben
 Firebase → **Authentication → Einstellungen → Autorisierte Domains → Domain hinzufügen** → `DEINNAME.github.io`. (Sonst klappt die Google-Anmeldung nicht.)
+`DEINNAME` ist dein GitHub-**Benutzername** (im Profil der graue Name unter dem Anzeigenamen), klein geschrieben – nicht der Anzeigename. Nur die Domain eintragen, ohne `https://` und ohne `/treffpunkt`. Die genaue Adresse steht auch unter **Settings → Pages** („Your site is live at …“).
 
 ### A8. Loslegen
 `https://DEINNAME.github.io/treffpunkt/` → **Mit Google anmelden** → **+ Neues Event** (der **Schnellstart** füllt z. B. „Spieleabend“ aus) → **Erstellen** → Link per WhatsApp teilen.
@@ -74,6 +84,7 @@ Danach gilt: Du lädst neue Dateien hoch, GitHub testet alles, und **nur wenn al
 ### B1. Admin-Schlüssel holen
 Firebase → **Zahnrad → Projekteinstellungen → Dienstkonten → Neuen privaten Schlüssel generieren** → Datei wird heruntergeladen.
 **Geheim halten:** Wer diese Datei hat, hat vollen Zugriff auf dein Firebase-Projekt. Nie hochladen, nie verschicken.
+Die Datei **nicht** in den Treffpunkt-Ordner legen – beim Hochladen per Hineinziehen würde sie sonst leicht mitgenommen. Geht sie verloren: einfach einen neuen Schlüssel erzeugen.
 
 ### B2. Einstellungen bei GitHub hinterlegen
 Im Repository **Settings → Secrets and variables → Actions**.
@@ -89,10 +100,16 @@ Tab **Secrets → New repository secret**:
 | `FIREBASE_SERVICE_ACCOUNT` | den **kompletten Inhalt** der Datei aus B1 (Datei mit einem Texteditor öffnen, alles kopieren) |
 | `BACKUP_PASSWORD` | ein langes Passwort für die Sicherungen – im Passwort-Manager aufheben! Ohne es kann niemand (auch du nicht) eine Sicherung lesen. |
 
-### B3. Einmal starten
-**Actions** → links **Tests & Veröffentlichen** → **Run workflow**. Nach ein paar Minuten:
-- grüner Haken = Tests bestanden, Regeln und App sind online;
-- rotes X = etwas stimmt nicht. Den Namen des roten Schritts (und bei Tests den Text darunter) an mich schicken.
+### B3. Automatik hochladen und starten
+Beim Hineinziehen (A5) hat GitHub den Ordner `.github` weggelassen, weil er mit einem Punkt beginnt. Er kommt jetzt von Hand dazu:
+1. **Settings → Pages** → bei *Source* von „Deploy from a branch“ auf **GitHub Actions** umstellen.
+2. Im Repository **Add file → Create new file** → als Dateinamen `.github/workflows/publish.yml` eintippen (bei jedem `/` wird daraus ein Ordner).
+3. Auf deinem PC die Datei `.github/workflows/publish.yml` im Editor öffnen → **Strg + A**, **Strg + C** → ins große Feld bei GitHub einfügen → **Commit changes…** → **Commit changes**.
+4. Du bist jetzt im Ordner `.github/workflows` → **Add file → Upload files** → die übrigen vier Dateien aus deinem Ordner `.github/workflows` hineinziehen (`backup.yml`, `maintenance.yml`, `notify.yml`, `tests.yml`) → **Commit changes**.
+   (Auf dem Mac ist `.github` im Finder versteckt: **⌘ + ⇧ + .** drücken.)
+5. Damit startet alles von selbst. **Actions** öffnen → oben steht ein Lauf „Tests & Veröffentlichen“. Nach ein paar Minuten:
+   - grüner Haken = Tests bestanden, Regeln und App sind online;
+   - rotes X = etwas stimmt nicht. Den Namen des roten Schritts (und bei Tests den Text darunter) an mich schicken.
 
 **Was jetzt automatisch läuft** (alles unter **Actions** zu sehen):
 | Ablauf | Wann | Was |
@@ -139,9 +156,20 @@ Auf dem iPhone geht Push nur, wenn Treffpunkt auf dem Home-Bildschirm liegt (Tei
 
 ## Updates (neue Versionen)
 Deine Freunde installieren nichts neu, der Link bleibt gleich, alle Antworten bleiben gespeichert.
+
+**Als Pull Request (wenn Claude Zugriff auf dein Repository hat):**
+1. Im Repository oben **Pull requests** → den neuen Eintrag öffnen. Dort steht, was sich ändert; unter **Files changed** siehst du jede Zeile.
+2. Warten, bis unten der Haken grün ist (die Tests laufen automatisch, ca. 4 Minuten).
+3. **Merge pull request** → **Confirm merge**. Erst jetzt geht die neue Version online. Gefällt dir etwas nicht: einfach nicht mergen und Bescheid sagen.
+
+Eigene Änderungen direkt auf GitHub (z. B. Texte) sind kein Problem – sie werden vor jedem Update übernommen.
+
+**Oder von Hand hochladen:**
 1. **Add file → Upload files** → die neuen Dateien und Ordner hineinziehen → **Commit changes**.
    Mit Teil B: Tests laufen, danach geht alles automatisch online. Ohne Teil B: `config.js` nicht überschreiben und geänderte Regeln per Hand einfügen (A3).
-2. Wer die App offen hat, sieht „Eine neue Version ist da“; alle anderen bekommen sie beim nächsten Öffnen.
+   Geänderte Dateien in `.github/workflows` lässt GitHub beim Hineinziehen weg: im Repository in den Ordner `.github/workflows` gehen und sie **dort** über **Add file → Upload files** hochladen.
+
+Wer die App offen hat, sieht „Eine neue Version ist da“; alle anderen bekommen sie beim nächsten Öffnen.
 
 ### Von Version 2.x auf 3.0 umsteigen – wichtig, in dieser Reihenfolge
 1. **Zuerst** dich als Organisator eintragen (A3, Punkt 2: Sammlung `admins`). Die neuen Regeln erkennen den Organisator nicht mehr an der Adresse in `firestore.rules`, sondern an diesem Eintrag.
