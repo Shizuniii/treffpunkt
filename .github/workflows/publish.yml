@@ -14,7 +14,7 @@ permissions:
 
 jobs:
   site:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     concurrency:
       group: pages
       cancel-in-progress: false
@@ -24,8 +24,8 @@ jobs:
     env:
       SA: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
         with:
           node-version: 22
       - name: Kalender-Abos erzeugen
@@ -47,9 +47,9 @@ jobs:
           DISCORD_CLIENT_ID: ${{ vars.DISCORD_CLIENT_ID }}
           VAPID_PUBLIC_KEY: ${{ vars.VAPID_PUBLIC_KEY }}
           CALENDAR: ${{ secrets.FIREBASE_SERVICE_ACCOUNT != '' }}
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: _site
       - id: deploy
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5
