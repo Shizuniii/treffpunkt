@@ -179,6 +179,7 @@ Wer die App offen hat, sieht „Eine neue Version ist da“; alle anderen bekomm
 
 ## Organisator-Werkzeuge
 - **Einfach / Ausführlich** (oben auf Startseite und Auswertung): Einfach zeigt pro Event nur Fortschritt, wer fehlt, die besten Tage und was auf dich wartet. Ausführlich zeigt alles.
+- **Personen ansehen** (Auswertung → Ausführlich): eine oder mehrere Personen antippen. Bei einer Person siehst du ihren Kalender genau so, wie sie ihn ausgefüllt hat; bei mehreren, wann genau diese zusammen können. In der Teilnehmerliste geht das auch über **📅 Ansehen**. „Alle anzeigen“ hebt die Auswahl auf.
 - **Schnellstart & Vorlagen:** beim neuen Event Spieleabend, Kino, Ausflug, Gruppenurlaub oder eigene Vorlagen. Unter **Mehr …** eines Events: **Nochmal mit neuem Zeitraum** oder **Als Vorlage speichern**.
 - **👥 Organisatoren** (unten auf der Startseite, optional): Mitorganisatoren per Google-Adresse hinzufügen oder die Leitung übergeben.
 - **Nachricht an die Gruppe:** Erinnerung oder Zwischenstand/Termin als fertiger Text für WhatsApp.

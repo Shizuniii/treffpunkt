@@ -48,6 +48,56 @@ suite('UI · Organisator', t => {
   );
 
   t(
+    'Auswertung: eine Person ansehen → ihr Kalender wie beim Abstimmen',
+    ui('#/r/demo1', async app => {
+      assert.no(await app.has('.pick-banner'), 'am Anfang zählen alle');
+      await app.click('.pick-row [data-act=pick]');
+      assert.ok(await app.has('.pick-banner'), 'Hinweis, dass nur eine Person gezeigt wird');
+      assert.includes(await app.text('.res-grid'), 'Kalender von');
+      assert.ok(
+        await app.count('.months .cell.st-all, .months .cell.st-part, .months .cell.st-maybe'),
+        'Felder wie beim Abstimmen'
+      );
+      assert.eq(await app.count('.months .cell.heat'), 0, 'keine Häufigkeits-Farben');
+      assert.no(await app.has('[data-act=dice]'), 'Würfeln nur, wenn alle zählen');
+      await app.click('.pick-banner [data-act=pick-clear]');
+      assert.no(await app.has('.pick-banner'));
+      assert.ok(await app.count('.months .cell.heat'), 'wieder alle');
+    })
+  );
+
+  t(
+    'Auswertung: mehrere Personen → wann genau diese zusammen können',
+    ui('#/r/demo1', async app => {
+      const chips = '.pick-row [data-act=pick]';
+      await app.click(`${chips} >> nth=0`);
+      await app.click(`${chips} >> nth=1`);
+      assert.eq(await app.count('.pick-row .chip.on'), 2);
+      assert.includes(await app.text('.pick-banner'), 'zusammen');
+      const scores = await app.texts('.dayrow .score');
+      assert.ok(scores.length && scores.every(s => s.endsWith('/2')), `nur 2 Personen gezählt: ${scores}`);
+      assert.ok(await app.count('.months .cell.heat'), 'Häufigkeits-Kalender für die Auswahl');
+      await app.click(`${chips} >> nth=1`);
+      assert.includes(await app.text('.res-grid'), 'Kalender von', 'zweite abgewählt → nur noch eine');
+    })
+  );
+
+  t(
+    'Auswertung: „Ansehen“ in der Teilnehmerliste; einfacher Überblick zählt weiter alle',
+    ui('#/r/demo1', async app => {
+      await app.click('.person [data-act=pick-only]');
+      assert.eq(await app.count('.pick-row .chip.on'), 1);
+      assert.ok(await app.has('.pick-banner'));
+      await app.click('[data-act=owner-view][data-v=simple]');
+      assert.no(await app.has('.pick-banner'), 'Einfach-Ansicht ist nie gefiltert');
+      await app.click('[data-act=owner-view][data-v=details]');
+      assert.ok(await app.has('.pick-banner'), 'Auswahl bleibt beim Zurückwechseln');
+      await app.goto('#/r/demo2');
+      assert.no(await app.has('.pick-banner'), 'gilt nur für dieses Event');
+    })
+  );
+
+  t(
     'Zeitraum-Vorschlag bestätigen',
     ui('#/r/demo2', async app => {
       await app.click('[data-act=add-ok]', 300);

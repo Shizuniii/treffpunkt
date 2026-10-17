@@ -1,6 +1,6 @@
 /* Auswertung für den Organisator. */
 import { B, S, TODAY } from '../app/state.js';
-import { ivText } from '../core/availability.js';
+import { effective, isAllDay, ivLabel, ivText } from '../core/availability.js';
 import {
   MONTHS_S,
   WD_SHORT,
@@ -40,16 +40,24 @@ import { textBlock } from './sheets.js';
 import { ruleText } from './vote.js';
 
 /* ---------- Auswertung ---------- */
-export function computeResults() {
+/** Ausgewählte Personen im aktuellen Event (leer = alle). */
+export const picked = () => (S.pick && S.poll && S.pick.id === S.poll.id ? S.pick.uids : []);
+/**
+ * people: true = Personen-Auswahl berücksichtigen. Nur die ausführliche Auswertung tut das –
+ * Würfeln, Nachricht an die Gruppe, Tagesdetails und der einfache Überblick zählen immer alle.
+ */
+export function computeResults({ people = false } = {}) {
   return computeResultsFor({
     poll: S.poll,
     responses: S.responses,
     filters: S.filters,
     today: TODAY,
     myUid: B && B.uid(),
+    people: people ? picked() : [],
   });
 }
 export const nameOf = (R, uid) => (R.resps.find(r => r.uid === uid) || {}).name || '?';
+const selNames = R => R.sel.map(uid => nameOf(R, uid));
 export function viewResults() {
   const p = S.poll,
     simple = S.ownerView === 'simple';
@@ -57,7 +65,7 @@ export function viewResults() {
   if (S.loadErr) return h + `<div class="banner bad">${esc(S.loadErr)}</div></div>`;
   if (p === undefined) return h + `<div class="empty">${LOAD_TXT}</div></div>`;
   if (p === null) return h + `<div class="card empty"><h2>Event nicht gefunden</h2></div></div>`;
-  const R = computeResults();
+  const R = computeResults({ people: !simple });
   const hero = `<div class="hero"><span class="eyebrow">${esc(monthsLabel(pollMonths(p)))} · Auswertung live</span><h1>${esc(p.title || 'Event')}</h1></div>`;
   // Einfach: nur das Wichtigste (js/ui/overview.js). Ausführlich: alles wie bisher.
   if (simple)
@@ -114,26 +122,42 @@ export function viewResults() {
       h +
       `<div class="card empty"><h2>Noch keine Antworten</h2><p>Schick den Link an deine Freunde. Neue Antworten erscheinen hier sofort.</p><button class="btn primary" data-act="share" data-id="${p.id}">Link teilen</button></div></div>`
     );
+  const one = R.sel.length === 1 ? R.resps[0] : null;
   h += `<div class="card"><div class="filters">
-     <div class="row"><span style="font-weight:600">Mindestens</span><div class="stepper"><button data-act="f-people" data-v="-1" aria-label="weniger">−</button><span>${R.minP}</span><button data-act="f-people" data-v="1" aria-label="mehr">+</button></div><span>von ${R.n} Personen</span></div>
+     ${pickRow(R)}
+     <div class="row"><span style="font-weight:600">Mindestens</span><div class="stepper"><button data-act="f-people" data-v="-1" aria-label="weniger">−</button><span>${R.minP}</span><button data-act="f-people" data-v="1" aria-label="mehr">+</button></div><span>von ${R.n} ${R.n === 1 ? 'Person' : 'Personen'}</span></div>
      <div class="row"><span style="font-weight:600">gemeinsam mind.</span><div class="stepper"><button data-act="f-hours" data-v="-1" aria-label="weniger">−</button><span>${S.filters.minHours}</span><button data-act="f-hours" data-v="1" aria-label="mehr">+</button></div><span>Std.</span></div>
      <label class="check small"><input type="checkbox" id="f-maybe" ${S.filters.inclMaybe ? 'checked' : ''}> „Vielleicht“ mitzählen</label>
      ${R.resps.some(r => (r.favs || []).length) ? `<div class="row"><span style="font-weight:600">Sortieren nach</span><div class="seg" role="group" aria-label="Sortierung"><button data-act="f-sort" data-v="0" class="${S.filters.sortFav ? '' : 'on'}">Verfügbarkeit</button><button data-act="f-sort" data-v="1" class="${S.filters.sortFav ? 'on' : ''}">⭐ Favoriten</button></div></div>` : ''}
-     <label class="check small"><input type="checkbox" id="f-done" ${S.filters.onlyDone ? 'checked' : ''}> nur fertige Antworten</label></div></div>`;
+     <label class="check small"><input type="checkbox" id="f-done" ${S.filters.onlyDone ? 'checked' : ''} ${R.sel.length ? 'disabled title="Gilt nicht, solange Personen ausgewählt sind"' : ''}> nur fertige Antworten</label></div></div>`;
+  if (R.sel.length)
+    h += `<div class="banner info pick-banner" role="status"><span>${one ? 'Du siehst nur, was' : 'Du siehst nur, wann'} <b>${esc(selNames(R).join(', '))}</b> ${one ? 'eingetragen hat' : 'zusammen können'}. Tagesdetails und „Nachricht an die Gruppe“ zählen weiter alle.</span><button class="btn sm" data-act="pick-clear">Alle anzeigen</button></div>`;
   const bestScore = R.ranked.length ? R.ranked[0].score : 0;
   const list = S.showAllDays ? R.ranked : R.ranked.slice(0, 8);
   const ties = R.ranked.length
     ? R.ranked.filter(d => d.score === R.ranked[0].score && d.maybeIn.length === R.ranked[0].maybeIn.length)
     : [];
-  h += `<div class="res-grid"><div class="card"><div class="row between"><h2>Beste Tage</h2><div class="row"><span class="small muted">${R.ranked.length} passende Tage</span>${ties.length >= 2 ? `<button class="btn sm" data-act="dice" title="${ties.length} Tage sind gleich gut">🎲 Auswürfeln</button>` : ''}</div></div>
+  const bestTitle = one
+    ? `Tage, an denen ${esc(one.name)} kann`
+    : R.sel.length
+      ? 'Beste Tage für die Auswahl'
+      : 'Beste Tage';
+  h += `<div class="res-grid"><div class="card"><div class="row between"><h2>${bestTitle}</h2><div class="row"><span class="small muted">${R.ranked.length} passende Tage</span>${ties.length >= 2 && !R.sel.length ? `<button class="btn sm" data-act="dice" title="${ties.length} Tage sind gleich gut">🎲 Auswürfeln</button>` : ''}</div></div>
      ${
        R.ranked.length
-         ? `<div class="top">${list.map((d, i) => dayRow(d, R, i === 0)).join('')}</div>
+         ? `<div class="top">${list.map((d, i) => dayRow(d, R, i === 0 && !one)).join('')}</div>
         ${R.ranked.length > 8 ? `<button class="btn sm ghost" data-act="toggle-all">${S.showAllDays ? 'Weniger anzeigen' : `Alle ${R.ranked.length} anzeigen`}</button>` : ''}`
-         : `<div class="empty">Kein Tag erfüllt die Filter. Senke die Mindestanzahl oder Stunden.</div>`
+         : `<div class="empty">${one ? `${esc(one.name)} hat noch keinen passenden Tag eingetragen.` : 'Kein Tag erfüllt die Filter. Senke die Mindestanzahl oder Stunden.'}</div>`
      }</div>`;
-  h += `<div class="card"><div class="stack" style="gap:4px"><h2>Kalender</h2><p class="small muted">Je dunkler, desto mehr können gleichzeitig. „4+1“ = 4 sicher, 1 vielleicht. Tippe auf einen Tag für Uhrzeiten und um ihn als Termin festzulegen.</p></div>
-     <div class="legend"><span><i class="sw" style="background:color-mix(in srgb,var(--accent) 25%,var(--surface))"></i>wenige</span><span><i class="sw" style="background:var(--accent)"></i>alle</span><span><i class="sw" style="box-shadow:inset 0 0 0 2px var(--fg)"></i>bester Tag</span><span><i class="sw maybe"></i>nur vielleicht</span><span><i class="sw" style="background:var(--holiday);border-radius:50%;width:8px;height:8px;border:0"></i>Feiertag</span><span><i class="sw" style="background:var(--ferien);height:4px;border:0"></i>Schulferien</span></div>
+  const holLegend = `<span><i class="sw" style="background:var(--holiday);border-radius:50%;width:8px;height:8px;border:0"></i>Feiertag</span><span><i class="sw" style="background:var(--ferien);height:4px;border:0"></i>Schulferien</span>`;
+  h += one
+    ? `<div class="card"><div class="stack" style="gap:4px"><h2>Kalender von ${esc(one.name)}</h2><p class="small muted">So hat ${esc(one.name)} eingetragen. Tippe auf einen Tag, um alle Personen an diesem Tag zu sehen und ihn als Termin festzulegen.</p></div>
+     <div class="legend"><span><i class="sw" style="background:var(--accent);border-color:var(--accent)"></i>Ganzer Tag</span><span><i class="sw" style="background:var(--accent-soft);border-color:var(--accent)"></i>Mit Uhrzeit</span><span><i class="sw maybe"></i>Vielleicht</span><span><i class="sw" style="background:var(--accent-mid);border:1px dashed var(--accent-mid)"></i>Automatisch (Wiederholung)</span><span><i class="sw" style="background:var(--surface-2)"></i>Kann nicht</span>${holLegend}</div>
+     <div class="months">${pollMonths(p)
+       .map(k => monthGrid(k, ds => personCell(ds, R, one)))
+       .join('')}</div></div></div>`
+    : `<div class="card"><div class="stack" style="gap:4px"><h2>${R.sel.length ? 'Kalender der Auswahl' : 'Kalender'}</h2><p class="small muted">Je dunkler, desto mehr können gleichzeitig. „4+1“ = 4 sicher, 1 vielleicht. Tippe auf einen Tag für Uhrzeiten und um ihn als Termin festzulegen.</p></div>
+     <div class="legend"><span><i class="sw" style="background:color-mix(in srgb,var(--accent) 25%,var(--surface))"></i>wenige</span><span><i class="sw" style="background:var(--accent)"></i>${R.sel.length ? 'alle Ausgewählten' : 'alle'}</span><span><i class="sw" style="box-shadow:inset 0 0 0 2px var(--fg)"></i>bester Tag</span><span><i class="sw maybe"></i>nur vielleicht</span>${holLegend}</div>
      <div class="months">${pollMonths(p)
        .map(k => monthGrid(k, ds => heatCell(ds, R, bestScore)))
        .join('')}</div></div></div>`;
@@ -157,14 +181,56 @@ export function dayRow(d, R, mvp) {
   const top = d.tiers[0];
   const extra = top && top.k > t.k ? ` · ${top.k} Pers. nur ${minStr(top.s)}–${minStr(top.e)}` : '';
   const fin = S.poll.final && S.poll.final.date === d.ds;
+  const sel = (R.sel || []).length;
+  const allCan = sel === 1 ? `${nameOf(R, R.sel[0])} kann` : sel ? 'Alle Ausgewählten können ✓' : 'Alle können 🎉';
   return `<button class="dayrow" data-act="open-day" data-d="${d.ds}" ${fin ? 'style="border-color:var(--accent);border-width:2px"' : ''}>
      <span class="date"><span>${WD_SHORT[wdIdx(d.ds)]}</span><b>${dt.getDate()}</b><span>${MONTHS_S[dt.getMonth()]}</span>${mvp ? '<span class="mvp">MVP</span>' : ''}</span>
      <span class="info"><span class="t">${fin ? '★ ' : ''}${t.len >= 1440 ? 'Ganztägig' : `${minStr(t.s)}–${minStr(t.e)}`} <span class="muted small">(${t.len >= 1440 ? '24 Std.' : durStr(t.len)})</span></span>
        ${d.maybeIn.length ? `<span class="mb">+ vielleicht: ${esc(d.maybeIn.map(x => x.r.name).join(', '))}</span>` : ''}
        ${d.fav.length ? `<span class="favline">⭐ Top 3 von ${esc(d.fav.map(x => `${x.r.name} (#${x.rank})`).join(', '))}</span>` : ''}
-       <span class="w">${missing.length ? `Ohne: ${esc(missing.join(', '))}` : 'Alle können 🎉'}${esc(extra)}</span>
+       <span class="w">${missing.length ? `Ohne: ${esc(missing.join(', '))}` : esc(allCan)}${esc(extra)}</span>
        ${hol || fer ? `<span class="w" style="color:var(--holiday)">${esc([hol && hol.name, fer].filter(Boolean).join(' · '))}</span>` : ''}</span>
-     <span class="score">${t.k}${d.maybeIn.length ? `<small>+${d.maybeIn.length}</small>` : ''}<small>/${R.n}</small></span></button>`;
+     <span class="score">${sel === 1 ? '✓' : `${t.k}${d.maybeIn.length ? `<small>+${d.maybeIn.length}</small>` : ''}<small>/${R.n}</small>`}</span></button>`;
+}
+/** Auswahl „Personen ansehen“: Chips für alle, die geantwortet haben. */
+export function pickRow(R) {
+  if (R.all.length < 2) return '';
+  const people = [...R.all].sort((a, b) => a.name.localeCompare(b.name, 'de'));
+  const chip = r => {
+    const on = R.sel.includes(r.uid);
+    return `<button class="chip${on ? ' on' : ''}" data-act="pick" data-id="${esc(r.uid)}" aria-pressed="${on}">${r.emoji ? esc(r.emoji) + ' ' : ''}${esc(r.name)}</button>`;
+  };
+  return `<div class="stack pick-row" style="gap:6px;flex:1 1 100%"><span style="font-weight:600">Personen ansehen <span class="small muted" style="font-weight:400">· eine oder mehrere antippen</span></span>
+    <div class="chips" role="group" aria-label="Personen ansehen"><button class="chip${R.sel.length ? '' : ' on'}" data-act="pick-clear" aria-pressed="${!R.sel.length}">Alle</button>${people.map(chip).join('')}</div></div>`;
+}
+/** Kalender-Feld für genau eine Person – sieht aus wie beim Abstimmen. */
+export function personCell(ds, R, r) {
+  const d = R.days.find(x => x.ds === ds),
+    dec = dayDecor(ds);
+  if (ds < TODAY || !d)
+    return `<button class="cell${dec.cls}${allowedWd(S.poll, ds) && inPoll(S.poll, ds) ? '' : ' off'}" disabled aria-label="${esc(fmtDate(ds, true))}"><span class="dn">${+ds.slice(8)}</span>${dec.extra}</button>`;
+  const eff = effective(r, ds);
+  let cls = 'cell' + dec.cls,
+    lab = '';
+  if (!eff.iv.length) cls += eff.explicit ? ' st-no' : '';
+  else if (eff.maybe) {
+    cls += ' st-maybe';
+    lab = isAllDay(eff.iv) ? '?' : ivLabel(eff.iv) + '?';
+  } else if (isAllDay(eff.iv)) cls += ' st-all';
+  else {
+    cls += ' st-part';
+    lab = ivLabel(eff.iv);
+  }
+  if (!eff.explicit && eff.iv.length) cls += ' auto';
+  if (S.poll.final && S.poll.final.date === ds) cls += ' fin';
+  const fr = (r.favs || []).indexOf(ds);
+  const state = eff.iv.length
+    ? eff.iv.map(ivText).join(', ') + (eff.maybe ? ' (vielleicht)' : '') + (eff.explicit ? '' : ' (automatisch)')
+    : eff.explicit
+      ? 'kann nicht'
+      : 'nichts eingetragen';
+  const aria = `${fmtDate(ds, true)}: ${r.name} ${state}${fr >= 0 && fr < 3 ? ` · Top ${fr + 1}` : ''}${dec.title ? ' · ' + dec.title : ''}`;
+  return `<button class="${cls}" data-act="open-day" data-d="${ds}" title="${esc(aria)}" aria-label="${esc(aria)}"><span class="dn">${+ds.slice(8)}</span>${lab ? `<span class="tl">${esc(lab)}</span>` : ''}${fr >= 0 && fr < 3 ? `<i class="favb">★${fr + 1}</i>` : ''}${dec.extra}</button>`;
 }
 export function heatCell(ds, R, bestScore) {
   const d = R.days.find(x => x.ds === ds),
@@ -217,7 +283,7 @@ export function personRow(r) {
      ${
        c
          ? `<button class="btn sm danger" data-act="del-resp" data-id="${esc(r.uid)}">Wirklich löschen</button><button class="btn sm ghost" data-act="del-cancel">Nein</button>`
-         : `<button class="btn sm" data-act="person-open" data-id="${esc(r.uid)}">${extOn ? 'Freigeschaltet ✓' : 'Ändern erlauben'}</button><button class="btn sm ghost" data-act="del-ask" data-id="${esc(r.uid)}" aria-label="Antwort löschen">Löschen</button>`
+         : `<button class="btn sm" data-act="pick-only" data-id="${esc(r.uid)}" aria-label="Kalender von ${esc(r.name)} ansehen">📅 Ansehen</button><button class="btn sm" data-act="person-open" data-id="${esc(r.uid)}">${extOn ? 'Freigeschaltet ✓' : 'Ändern erlauben'}</button><button class="btn sm ghost" data-act="del-ask" data-id="${esc(r.uid)}" aria-label="Antwort löschen">Löschen</button>`
      }</div></div>`;
 }
 export function resultText(p) {

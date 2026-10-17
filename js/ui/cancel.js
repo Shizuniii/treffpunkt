@@ -28,7 +28,7 @@ export function sheetCancel() {
     if (s.reason === 'other')
       h += `<div class="banner warn">Der Council muss entscheiden. Gib deine Begründung in der WhatsApp Gruppe an</div>`;
   }
-  h += `<label class="field">Nachricht an Selim<span class="muted small" style="font-weight:400">(optional)</span><input type="text" id="cx-note" maxlength="120" placeholder="z. B. Sorry, Familienfeier" value="${esc(s.note || '')}"></label>`;
+  h += `<label class="field">Nachricht an Selim <span class="muted small" style="font-weight:400">(optional)</span><input type="text" id="cx-note" maxlength="120" placeholder="z. B. Sorry, Familienfeier" value="${esc(s.note || '')}"></label>`;
   const ready = !late || !rule || s.reason;
   return (
     h +

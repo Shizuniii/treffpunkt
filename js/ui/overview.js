@@ -130,6 +130,6 @@ export function resultsSimple(p, R) {
       }
       <div class="row"><button class="btn sm" data-act="share-result">Zwischenstand an die Gruppe</button></div></div>`;
   }
-  h += `<div class="row ov-foot"><button class="btn ghost" data-act="owner-view" data-v="details">Alle Details anzeigen →</button></div>`;
+  h += `<div class="row ov-foot"><button class="btn ghost" data-act="owner-view" data-v="details">Alle Details & einzelne Personen →</button></div>`;
   return h;
 }

@@ -54,7 +54,7 @@ import { helpBody, markNewsSeen, showMe } from '../ui/help.js';
 import { partOn, pollToForm } from '../ui/home.js';
 import { doReopen, sendProposal } from '../ui/period.js';
 import { render } from '../ui/render.js';
-import { computeResults } from '../ui/results.js';
+import { computeResults, picked } from '../ui/results.js';
 import { renderSheet, trapTab } from '../ui/sheets.js';
 import { noDaysAtAll, refreshAfterEdit, renderDock, updateCell, validFavs } from '../ui/vote.js';
 
@@ -279,11 +279,29 @@ document.addEventListener('click', async e => {
         break;
       }
       case 'f-people': {
-        const R = computeResults();
+        const R = computeResults({ people: true });
         S.filters.minPeople = Math.max(1, Math.min(R.n || 1, R.minP + +v));
         render();
         break;
       }
+      // ---- Auswertung: einzelne Personen ansehen ----
+      case 'pick': {
+        const cur = picked(),
+          uid = el.dataset.id;
+        S.pick = { id: S.poll.id, uids: cur.includes(uid) ? cur.filter(x => x !== uid) : [...cur, uid] };
+        render();
+        break;
+      }
+      case 'pick-only':
+        S.pick = { id: S.poll.id, uids: [el.dataset.id] };
+        render();
+        // Aus der Teilnehmerliste unten kommend: nach oben zur Auswahl springen
+        (document.querySelector('.pick-banner') || document.body).scrollIntoView({ block: 'start' });
+        break;
+      case 'pick-clear':
+        S.pick = { id: null, uids: [] };
+        render();
+        break;
       case 'f-hours':
         S.filters.minHours = Math.max(0, Math.min(24, S.filters.minHours + +v));
         render();
