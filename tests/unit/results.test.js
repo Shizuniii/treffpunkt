@@ -84,4 +84,56 @@ suite('Auswertung', t => {
       ['cem']
     );
   });
+
+  const sel = people =>
+    computeResultsFor({ poll, responses: resps, filters: F, today: '2026-11-01', myUid: null, people });
+  t('Personen-Auswahl: nur die Ausgewählten zählen', () => {
+    const R = sel(['anna', 'ben']);
+    assert.eq(R.n, 2);
+    assert.deep(R.sel, ['anna', 'ben']);
+    assert.deep(
+      R.ranked.map(d => d.ds),
+      ['2026-11-07', '2026-11-14'],
+      'der 8. fehlt – da kann Ben nicht'
+    );
+    assert.eq(R.all.length, 3, 'alle Antworten bleiben für die Auswahl-Liste erhalten');
+  });
+  t('Personen-Auswahl: eine Person = ihre eigenen Tage', () => {
+    const R = sel(['cem']);
+    assert.eq(R.n, 1);
+    assert.eq(R.minP, 1, 'Mindestanzahl passt sich an');
+    assert.deep(
+      R.ranked.map(d => [d.ds, d.main.s]),
+      [
+        ['2026-11-08', 0],
+        ['2026-11-14', 0],
+        ['2026-11-07', 840],
+      ]
+    );
+  });
+  t('Personen-Auswahl: unbekannte Personen werden ignoriert', () => {
+    const R = sel(['zoe']);
+    assert.eq(R.n, 3);
+    assert.deep(R.sel, []);
+  });
+  t('Personen-Auswahl gilt auch für nicht fertige Antworten', () => {
+    const open = [resps[0], { ...resps[1], done: false }, resps[2]];
+    const R = computeResultsFor({
+      poll,
+      responses: open,
+      filters: { ...F, onlyDone: true },
+      today: '2026-11-01',
+      myUid: null,
+      people: ['ben'],
+    });
+    assert.eq(R.n, 1, 'Ben ist ausgewählt, obwohl noch nicht fertig');
+    const R2 = computeResultsFor({
+      poll,
+      responses: open,
+      filters: { ...F, onlyDone: true },
+      today: '2026-11-01',
+      myUid: null,
+    });
+    assert.eq(R2.n, 2, 'ohne Auswahl gilt „nur fertige“ wie gewohnt');
+  });
 });

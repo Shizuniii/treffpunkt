@@ -1,4 +1,4 @@
-# Alle 15 Minuten: fällige Benachrichtigungen verschicken (Discord, Push) und Kalender-Abos aktualisieren.
+# Geplant alle 15 Minuten (GitHub startet geplante Abläufe in der Praxis oft erst nach Stunden): fällige Benachrichtigungen verschicken (Discord, Push) und Kalender-Abos aktualisieren.
 # Nichts eingerichtet (kein FIREBASE_SERVICE_ACCOUNT)? Dann passiert einfach nichts.
 name: Benachrichtigungen
 

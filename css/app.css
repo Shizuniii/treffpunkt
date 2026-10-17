@@ -735,7 +735,8 @@ button.cell:not([disabled]):hover {
 .cell.heat.best {
   box-shadow: inset 0 0 0 2px var(--fg);
 }
-.cell.heat.fin {
+.cell.heat.fin,
+.cell.fin {
   outline: 3px solid var(--holiday);
   outline-offset: -3px;
 }

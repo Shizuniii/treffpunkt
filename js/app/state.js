@@ -13,7 +13,7 @@ import { DEFAULT_FILTERS } from '../core/results.js';
      members/{uid}               privat, nur die Person selbst: name, polls{pid:{t,at}}
    Ältere Antworten (v1) bleiben gültig: v2 hat nur Felder ergänzt.
    ===================================================================== */
-export const APP_VERSION = '3.0.0';
+export const APP_VERSION = '3.1.0';
 export const CFG = window.TREFFPUNKT_CONFIG || {};
 /** Demo-Modus: solange config.js noch Platzhalter hat – oder jederzeit mit ?demo in der Adresse
     (z. B. https://…/treffpunkt/?demo). Dann wird nie mit Firebase gesprochen, alles bleibt in diesem Browser. */
@@ -56,6 +56,7 @@ export const S = {
   undo: [],
   save: 'idle',
   filters: { ...DEFAULT_FILTERS },
+  pick: { id: null, uids: [] }, // Auswertung: ausgewählte Personen (gilt nur für das Event mit dieser id)
   sheet: null,
   editPoll: null,
   ruleForm: null,

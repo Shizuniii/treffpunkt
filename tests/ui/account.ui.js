@@ -153,7 +153,9 @@ suite('UI · Konto', t => {
       await app.click('.sheet [data-act=acc-mode][data-v=login]');
       await app.click('.sheet [data-act=acc-mode][data-v=forgot]');
       await account(app, null, 'anna');
-      assert.includes(await app.text('.sheet .banner.info'), 'Organisator');
+      // Nur prüfen, dass der Hinweis für Benutzernamen kommt – der genaue Wortlaut darf sich ändern.
+      assert.includes(await app.text('.sheet .banner.info'), 'Benutzernamen');
+      assert.no(await app.has('.sheet .banner.ok'), 'kein E-Mail-Link bei Benutzernamen');
       await account(app, null, 'anna@example.com');
       assert.includes(await app.text('.sheet .banner.ok'), 'E-Mail');
     })

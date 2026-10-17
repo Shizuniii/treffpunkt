@@ -49,6 +49,22 @@ suite('UI · Barrierefreiheit', t => {
       )
     );
 
+  for (const [name, opts] of [
+    ['Auswertung: eine Person ansehen', {}],
+    ['Auswertung: eine Person ansehen (dunkel)', { dark: true }],
+  ])
+    t(
+      `axe: ${name}`,
+      ui(
+        '#/r/demo1',
+        async app => {
+          await app.click('.person [data-act=pick-only]');
+          await axe(app);
+        },
+        opts
+      )
+    );
+
   t(
     'Fenster: Fokus hinein, Tab bleibt drin, Esc schließt, Fokus zurück',
     ui('#/p/demo1', async app => {

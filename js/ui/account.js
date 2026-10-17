@@ -74,7 +74,7 @@ function forgotView(s) {
       ${userInput(s, 'Benutzername oder E-Mail', s.user || '')}
       <div><button type="submit" class="btn primary" ${busy(s)}>Weiter</button></div></form>`;
   if (s.info === 'pseudo')
-    h += `<div class="banner info"><span>Bei einem Konto mit Benutzernamen (ohne E-Mail). Schreib Selim kurz deinen Benutzernamen und du bekommst dann ein neues.</span></div>`;
+    h += `<div class="banner info"><span>Du hast ein Konto mit Benutzernamen (ohne E-Mail)? Dann schreib Selim kurz deinen Benutzernamen, und du bekommst ein neues Passwort.</span></div>`;
   if (s.info === 'sent')
     h += `<div class="banner ok"><span>Wenn es ein Konto mit dieser Adresse gibt, ist jetzt eine E-Mail mit einem Link zum Zurücksetzen unterwegs. Schau auch im Spam-Ordner.</span></div>`;
   return (

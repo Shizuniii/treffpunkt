@@ -63,6 +63,16 @@ suite('UI · Sicherheit (eingeschleuster Code)', t => {
         await app.click('.dayrow');
         await clean(app, route + ' Tagesdetails');
         await app.page.keyboard.press('Escape');
+        // Personen ansehen: jede Person einzeln (Titel, Hinweis, Kalender) und alle zusammen
+        const nPeople = await app.count('.person [data-act=pick-only]');
+        for (let i = 0; i < nPeople; i++) {
+          await app.click(`.person [data-act=pick-only] >> nth=${i}`);
+          await clean(app, `${route} Person ${i + 1} ansehen`);
+        }
+        await app.click('[data-act=pick-clear] >> nth=0');
+        for (let i = 0; i < Math.min(nPeople, 3); i++) await app.click(`.pick-row [data-act=pick] >> nth=${i}`);
+        await clean(app, route + ' mehrere Personen ansehen');
+        await app.click('[data-act=pick-clear] >> nth=0');
         await app.click('[data-act=extend-open]');
         await clean(app, route + ' Frist');
         await app.page.keyboard.press('Escape');

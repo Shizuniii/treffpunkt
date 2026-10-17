@@ -310,8 +310,8 @@ export const HELP = [
     icon: '📊',
     title: 'Auswertung lesen',
     mock: 'heat',
-    kw: 'auswertung ergebnis bester tag überschneidung heatmap wer kann wann statistik filter favoriten sortieren',
-    text: '„Beste Tage“ sortiert nach den meisten Personen und der längsten gemeinsamen Zeit, auf Wunsch nach Top-3-Favoriten. Tippe auf einen Tag für die Zeitleiste pro Person.',
+    kw: 'auswertung ergebnis bester tag überschneidung heatmap wer kann wann statistik filter favoriten sortieren einzelne person personen auswahl ansehen kalender von',
+    text: '„Beste Tage“ sortiert nach den meisten Personen und der längsten gemeinsamen Zeit, auf Wunsch nach Top-3-Favoriten. Tippe auf einen Tag für die Zeitleiste pro Person. Unter „Personen ansehen“ (Ausführlich) tippst du eine oder mehrere Personen an: Bei einer Person siehst du ihren Kalender genau so, wie sie ihn ausgefüllt hat, bei mehreren, wann genau diese zusammen können.',
   },
   {
     id: 'o-accounts',
