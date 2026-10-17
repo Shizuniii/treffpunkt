@@ -1,5 +1,5 @@
 /* Benachrichtigungen verschicken und Kalender-Abos erzeugen.
-   Läuft über GitHub Actions (.github/workflows/notify.yml, alle 15 Minuten) – nie im Browser.
+   Läuft über GitHub Actions (.github/workflows/notify.yml, geplant alle 15 Minuten, in der Praxis oft seltener) – nie im Browser.
 
    Einstellungen (GitHub → Repository → Settings → Secrets and variables → Actions):
      FIREBASE_SERVICE_ACCOUNT   Secret    Inhalt des Firebase-Admin-Schlüssels (JSON)

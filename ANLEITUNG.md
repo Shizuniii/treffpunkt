@@ -115,7 +115,7 @@ Beim Hineinziehen (A5) hat GitHub den Ordner `.github` weggelassen, weil er mit 
 | Ablauf | Wann | Was |
 |---|---|---|
 | Tests & Veröffentlichen | bei jedem Hochladen | Unit-, UI- und Regel-Tests → Regeln nach Firebase → App nach GitHub Pages |
-| Benachrichtigungen | alle 15 Minuten | nur aktiv, wenn Teil C eingerichtet ist; Kalender-Abos aktualisieren |
+| Benachrichtigungen | alle paar Stunden (geplant alle 15 Min., GitHub startet aber oft viel später) | nur aktiv, wenn Teil C eingerichtet ist; Kalender-Abos aktualisieren |
 | Sicherung | sonntags | verschlüsselte Sicherung, 90 Tage unter „Actions → Sicherung → Artifacts“ |
 | Wartung | am 1. jedes Monats | Ferien noch aktuell? Neue Firebase-Version? → legt ggf. ein Issue an (du bekommst eine E-Mail) |
 
@@ -132,7 +132,7 @@ Hinweis: GitHub pausiert zeitgesteuerte Abläufe, wenn 60 Tage nichts im Reposit
 
 ## Teil C – Benachrichtigungen (optional)
 
-Freunde entscheiden selbst unter **🔔 Benachrichtigungen**, ob und worüber sie Bescheid bekommen. Du richtest nur die Wege ein, die du anbieten willst. Voraussetzung: Teil B. Nachrichten kommen mit etwa 15 Minuten Verzögerung. In eine **WhatsApp-Gruppe** kann Treffpunkt nicht selbst schreiben – dafür gibt es weiter „Nachricht an die Gruppe“ zum Kopieren.
+Freunde entscheiden selbst unter **🔔 Benachrichtigungen**, ob und worüber sie Bescheid bekommen. Du richtest nur die Wege ein, die du anbieten willst. Voraussetzung: Teil B. Nachrichten kommen **nicht sofort**: Der Versand ist alle 15 Minuten geplant, GitHub startet ihn in der Praxis aber oft nur alle 2–4 Stunden. Für „Der Termin steht“ reicht das meist; für Eiliges lieber direkt in die WhatsApp-Gruppe schreiben. In eine **WhatsApp-Gruppe** kann Treffpunkt nicht selbst schreiben – dafür gibt es weiter „Nachricht an die Gruppe“ zum Kopieren.
 
 ### C1. Kalender-Abo
 Nichts weiter zu tun – mit Teil B ist es an. Freunde tippen auf „Abo einrichten“ (erst nach ausdrücklicher Zustimmung) und abonnieren die Adresse im Handy- oder Google-Kalender. Google holt Änderungen nur alle paar Stunden, Apple-Kalender öfter.

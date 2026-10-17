@@ -1,5 +1,5 @@
 /* Benachrichtigungen planen (rein, ohne DOM und ohne Netz): Wer bekommt wann welche Nachricht?
-   Genutzt vom Versand-Skript tools/notify.js (läuft alle 15 Minuten über GitHub Actions) und in den Tests.
+   Genutzt vom Versand-Skript tools/notify.js (läuft geplant alle 15 Minuten über GitHub Actions, in der Praxis oft seltener) und in den Tests.
 
    Jede Nachricht hat einen festen Schlüssel (z. B. „final|<event>|<datum>|<von>|<bis>“). Was schon verschickt
    wurde, steht im Versand-Protokoll – so kommt nichts doppelt, und wer sich später anmeldet, bekommt keine

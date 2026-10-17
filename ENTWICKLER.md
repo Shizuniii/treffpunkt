@@ -82,7 +82,7 @@ tools/                läuft in Node.js (auf deinem PC oder in GitHub Actions), 
 .github/workflows/
   tests.yml             bei jedem Hochladen: Tests → Regeln veröffentlichen → App veröffentlichen
   publish.yml           Seite bauen und auf GitHub Pages veröffentlichen (wird aufgerufen)
-  notify.yml            alle 15 Minuten: Benachrichtigungen, Kalender-Abos
+  notify.yml            geplant alle 15 Minuten (GitHub startet oft erst nach Stunden): Benachrichtigungen, Kalender-Abos
   backup.yml            sonntags: verschlüsselte Sicherung; hält zeitgesteuerte Abläufe aktiv
   maintenance.yml       monatlich: Wartungs-Check → GitHub-Issue
 ```
@@ -120,7 +120,7 @@ Die Oberfläche ist also immer eine Funktion des Zustands `S`. Wer etwas anzeige
 ## Benachrichtigungen
 
 ```
-App (Browser)                         Firestore                    GitHub Actions (alle 15 Min.)
+App (Browser)                         Firestore                    GitHub Actions (geplant 15 Min.)
 „🔔 Benachrichtigungen“  ──schreibt──►  notify/{uid}      ◄──liest──  tools/notify.js
   Discord verbinden (OAuth, Konto-ID)     types, discord,              planNotifications()  (js/core/notify.js)
   Push einschalten (Abo des Geräts)       push[], cal                  → Discord-Bot: Direktnachricht

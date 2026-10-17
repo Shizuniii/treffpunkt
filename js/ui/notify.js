@@ -42,7 +42,7 @@ export function sheetNotify() {
     n = notifyDraft();
   let h = sheetHead('🔔 Benachrichtigungen');
   if (s.loading) return h + '<p class="muted">Lädt …</p>';
-  h += `<p class="small muted">Ganz freiwillig: 'Treffpunkt' meldet sich nur über die Wege, die du hier einschaltest. Nachrichten kommen mit etwa 15 Minuten Verzögerung.${DEMO ? ' <b>Demo:</b> Hier wird nur so getan, als ob.' : ''}</p>`;
+  h += `<p class="small muted">Ganz freiwillig: 'Treffpunkt' meldet sich nur über die Wege, die du hier einschaltest. Nachrichten kommen nicht sofort, sondern meist innerhalb von ein paar Stunden.${DEMO ? ' <b>Demo:</b> Hier wird nur so getan, als ob.' : ''}</p>`;
   if (B.isAnon())
     h += `<div class="banner info"><span>Gilt für dieses Gerät. Mit einem Konto gilt es überall. <button class="linkbtn" data-act="acc-open">Konto</button></span></div>`;
 
