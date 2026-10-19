@@ -239,7 +239,7 @@ export const HELP = [
     icon: '🔒',
     title: 'Wer sieht meine Angaben?',
     kw: 'datenschutz privat wer sieht sichtbar anonym geheim andere teilnehmer sehen',
-    text: 'Nur der Organisator sieht alle Antworten. Andere Teilnehmer sehen deine Angaben nicht, auch nicht deine Top 3.',
+    text: 'Normalerweise sieht nur der Organisator alle Antworten. Er kann pro Event erlauben, dass alle, die abgestimmt haben, oder ein paar ausgewählte Personen sehen, wann die anderen können (Tage, Uhrzeiten, Top 3). Dann steht beim Abstimmen ein Hinweis 👀 – ohne diesen Hinweis sieht niemand außer dem Organisator deine Angaben. Deine Notiz an den Organisator und deine Absage-Nachricht werden anderen nicht angezeigt.',
   },
   {
     id: 'restricted',
@@ -314,6 +314,15 @@ export const HELP = [
     text: '„Beste Tage“ sortiert nach den meisten Personen und der längsten gemeinsamen Zeit, auf Wunsch nach Top-3-Favoriten. Tippe auf einen Tag für die Zeitleiste pro Person. Unter „Personen ansehen“ (Ausführlich) tippst du eine oder mehrere Personen an: Bei einer Person siehst du ihren Kalender genau so, wie sie ihn ausgefüllt hat, bei mehreren, wann genau diese zusammen können.',
   },
   {
+    id: 'o-share',
+    who: 'owner',
+    icon: '👀',
+    title: 'Antworten für Teilnehmer freigeben',
+    kw: 'freigeben teilen andere sehen teilnehmer sichtbar auswahl der anderen einsehen bestimmte mitglieder viewer',
+    text: 'Unter „Bearbeiten“ → „Wer sieht die Antworten der anderen?“: Organisatoren (Standard), alle Teilnehmer, die abgestimmt haben, oder nur ausgewählte Personen. Wer darf, sieht beim Abstimmen „Auswahl der anderen ansehen“ – die Auswertung zum Nur-Ansehen, auch einzeln pro Person. Festlegen, löschen und Fristen bleiben bei dir. Alle Teilnehmer sehen einen Hinweis, dass ihre Tage sichtbar sind.',
+  },
+
+  {
     id: 'o-accounts',
     who: 'owner',
     icon: '🔑',
@@ -339,6 +348,17 @@ export const HELP = [
   },
 ];
 export const CHANGELOG = [
+  {
+    v: '3.2.0',
+    items: [
+      [
+        '👀',
+        'Auswahl der anderen ansehen',
+        'Wenn der Organisator es bei einem Event erlaubt, siehst du, wann die anderen können – auch einzeln pro Person.',
+        'private',
+      ],
+    ],
+  },
   {
     v: '3.0.0',
     items: [

@@ -1,5 +1,5 @@
 /* Aufklapp-Fenster (Bottom-Sheets): Teilen, Text, Tagesdetails. */
-import { S } from '../app/state.js';
+import { S, isOwner } from '../app/state.js';
 import { effective, ivText } from '../core/availability.js';
 import { durStr, fmtDate, minShort, minStr } from '../core/dates.js';
 import { pollClosed } from '../core/poll.js';
@@ -184,8 +184,15 @@ export function sheetDay() {
           .join('')
       : '<p class="muted small">Niemand überschneidet sich an diesem Tag.</p>'
   }</div>`;
-  // Termin festlegen
+  // Termin festlegen – nur Organisatoren (Teilnehmer mit Freigabe sehen nur, wer wann kann)
   const isFin = p.final && p.final.date === ds;
+  if (!isOwner())
+    return (
+      h +
+      (isFin
+        ? `<div class="banner ok"><span>Festgelegter Termin: ${esc(ivText([p.final.s, p.final.e]))}</span></div>`
+        : '')
+    );
   const m = d.main || d.tiers[0];
   const preS = isFin ? p.final.s : m ? m.s : 0,
     preE = isFin ? p.final.e : m ? m.e : 1440;

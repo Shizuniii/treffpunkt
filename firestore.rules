@@ -49,6 +49,19 @@ service cloud.firestore {
         && (!('cal' in d) || d.cal == null || (d.cal is map && d.cal.token is string && d.cal.token.matches('^[a-z0-9]{24,40}$')));
     }
 
+    // Antworten der anderen sehen – pro Event vom Organisator erlaubt (Feld "share"):
+    //   'all'  = alle, die in diesem Event selbst eine Antwort haben
+    //   'some' = nur Personen, die in "viewers" eingeschaltet sind
+    //   sonst  = niemand außer Organisatoren (Standard)
+    function canSeeOthers(pollId) {
+      let p = get(/databases/$(database)/documents/polls/$(pollId)).data;
+      let share = p.get('share', 'none');
+      return request.auth != null && (
+        (share == 'all' && exists(/databases/$(database)/documents/polls/$(pollId)/responses/$(request.auth.uid)))
+        || (share == 'some' && p.get('viewers', {}).get(request.auth.uid, {}).get('on', false) == true)
+      );
+    }
+
     function canWrite(pollId, uid) {
       let p = get(/databases/$(database)/documents/polls/$(pollId)).data;
       return participantOk(p, pollId, uid) && openFor(p, pollId, uid);
@@ -98,8 +111,9 @@ service cloud.firestore {
       allow update: if isAdmin() || (request.auth != null && proposeRange(pollId, request.auth.uid));
 
       match /responses/{uid} {
-        // Jeder sieht nur seine eigene Antwort – Organisatoren sehen alle.
-        allow read: if isAdmin() || (request.auth != null && request.auth.uid == uid);
+        // Jeder sieht seine eigene Antwort, Organisatoren sehen alle –
+        // und andere nur, wenn der Organisator es für dieses Event erlaubt hat (canSeeOthers).
+        allow read: if isAdmin() || (request.auth != null && request.auth.uid == uid) || canSeeOthers(pollId);
         allow create: if request.auth != null && request.auth.uid == uid && validResponse()
                       && (isAdmin() || canWrite(pollId, uid));
         allow update: if request.auth != null && request.auth.uid == uid && validResponse()

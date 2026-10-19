@@ -27,6 +27,9 @@ async function poison(app) {
     d.members['demo-me'] = { name: evil, polls: { demo1: { t: evil, at: 1 } } };
     d.notify = { 'demo-me': { types: {}, discord: { id: '1', name: evil }, push: [], cal: null, discordError: evil } };
     d.passes = { demo1: { abcdefghijkl: { until: Date.now() + 1e8, label: evil } } };
+    // Freigaben: demo2 für alle (Freund sieht die Auswertung), demo1 für eine Person mit Angriffs-Namen
+    p2.share = 'all';
+    Object.assign(p1, { share: 'some', viewers: { 'demo-ben': { on: true, name: evil } } });
     localStorage.setItem('treffpunkt-demo-v3', JSON.stringify(d));
   }, EVIL);
   await app.goto(route);
@@ -48,6 +51,10 @@ suite('UI · Sicherheit (eingeschleuster Code)', t => {
     ui('#/', async app => {
       await poison(app);
       await clean(app, 'Startseite ausführlich');
+      await app.click('[data-act=edit-poll][data-id=demo1]');
+      await app.click('details[data-key=openShare] > summary');
+      await clean(app, 'Formular: Freigabe für ausgewählte Personen');
+      await app.click('[data-act=pf-cancel]');
       await app.click('[data-act=owner-view][data-v=simple]');
       await clean(app, 'Startseite einfach');
       await app.click('[data-act=admins-open]');
@@ -95,6 +102,11 @@ suite('UI · Sicherheit (eingeschleuster Code)', t => {
         await clean(app, 'zweites Event mit Termin');
         await app.click('[data-act=notify-open]', 300);
         await clean(app, 'Benachrichtigungen');
+        await app.page.keyboard.press('Escape');
+        await app.goto('#/r/demo2');
+        await clean(app, 'Auswahl der anderen (nur ansehen)');
+        await app.click('.dayrow');
+        await clean(app, 'Auswahl der anderen: Tagesdetails');
         await app.page.keyboard.press('Escape');
         await app.goto('#/');
         await clean(app, 'Startseite Teilnehmer');

@@ -11,6 +11,7 @@ import './organizer.ui.js';
 import './notify.ui.js';
 import './a11y.ui.js';
 import './security.ui.js';
+import './share.ui.js';
 import { runSuites } from '../lib/mini-test.js';
 import { startHarness, stopHarness } from './harness.js';
 

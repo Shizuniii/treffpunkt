@@ -40,6 +40,24 @@ export const partList = p =>
   Object.entries((p && p.participants) || {})
     .filter(([, x]) => x && x.on === true)
     .map(([uid, x]) => ({ uid, name: x.name || '' }));
+
+/* Antworten der anderen sehen (vom Organisator pro Event erlaubt). Gleiche Logik wie in firestore.rules:
+     share 'none' (Standard) = nur Organisatoren
+     share 'all'             = alle, die in diesem Event selbst abgestimmt haben
+     share 'some'            = nur Personen in viewers { uid: { on: true, name } } */
+export const SHARE_MODES = ['none', 'all', 'some'];
+export const shareMode = p => (p && SHARE_MODES.includes(p.share) ? p.share : 'none');
+export const viewerList = p =>
+  Object.entries((p && p.viewers) || {})
+    .filter(([, x]) => x && x.on === true)
+    .map(([uid, x]) => ({ uid, name: x.name || '' }));
+/** Darf diese Person (nicht Organisator) die Antworten der anderen sehen? answered = hat selbst schon eine Antwort. */
+export function canSeeOthers(p, uid, answered) {
+  const m = shareMode(p);
+  if (m === 'all') return !!(uid && answered);
+  if (m === 'some') return viewerList(p).some(x => x.uid === uid);
+  return false;
+}
 /* Seit der letzten Antwort neu dazugekommen? (neue Runde, neue Tage, Zeitraum-Vorschläge anderer) */
 export function changeTimeFor(p, uid) {
   let t = Math.max((p && p.reopenedAt) || 0, (p && p.expandedAt) || 0);

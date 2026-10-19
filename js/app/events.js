@@ -617,6 +617,22 @@ document.addEventListener('click', async e => {
         render();
         break;
       }
+      // ---- Wer sieht die Antworten der anderen? ----
+      case 'pf-share':
+        readPollForm();
+        S.editPoll.share = v;
+        S.editPoll.openShare = true;
+        render();
+        break;
+      case 'pf-viewer': {
+        readPollForm();
+        const f = S.editPoll,
+          id = el.dataset.id,
+          cur = f.viewers[id];
+        f.viewers[id] = { on: !(cur && cur.on), name: (cur && cur.name) || v || '' };
+        render();
+        break;
+      }
       case 'pf-addmode':
         readPollForm();
         S.editPoll.addMode = v;
