@@ -1,5 +1,5 @@
-/* Auswertung für den Organisator. */
-import { B, S, TODAY } from '../app/state.js';
+/* Auswertung für den Organisator – und zum Nur-Ansehen für Teilnehmer, wenn der Organisator es erlaubt. */
+import { B, S, TODAY, isOwner } from '../app/state.js';
 import { effective, isAllDay, ivLabel, ivText } from '../core/availability.js';
 import {
   MONTHS_S,
@@ -19,6 +19,7 @@ import {
   addedList,
   addedOk,
   allowedWd,
+  canSeeOthers,
   countsAsDone,
   inPoll,
   isRestricted,
@@ -26,6 +27,8 @@ import {
   partList,
   pollClosed,
   pollMonths,
+  shareMode,
+  viewerList,
 } from '../core/poll.js';
 import { computeResultsFor } from '../core/results.js';
 import { colorFor, esc, initials } from '../core/util.js';
@@ -59,14 +62,19 @@ export function computeResults({ people = false } = {}) {
 export const nameOf = (R, uid) => (R.resps.find(r => r.uid === uid) || {}).name || '?';
 const selNames = R => R.sel.map(uid => nameOf(R, uid));
 export function viewResults() {
+  // ro = nur ansehen: Teilnehmer, denen der Organisator die Auswertung freigegeben hat (kein Bearbeiten).
   const p = S.poll,
-    simple = S.ownerView === 'simple';
-  let h = `<div class="wrap${simple ? '' : ' wide'}">${topbar(`<a class="btn sm ghost" href="#/">← Übersicht</a>`)}`;
+    ro = !isOwner(),
+    simple = !ro && S.ownerView === 'simple';
+  const back = ro
+    ? `<a class="btn sm ghost" href="#/p/${esc((p && p.id) || S.route.id)}">← Zur Abstimmung</a>`
+    : `<a class="btn sm ghost" href="#/">← Übersicht</a>`;
+  let h = `<div class="wrap${simple ? '' : ' wide'}">${topbar(back)}`;
   if (S.loadErr) return h + `<div class="banner bad">${esc(S.loadErr)}</div></div>`;
   if (p === undefined) return h + `<div class="empty">${LOAD_TXT}</div></div>`;
   if (p === null) return h + `<div class="card empty"><h2>Event nicht gefunden</h2></div></div>`;
   const R = computeResults({ people: !simple });
-  const hero = `<div class="hero"><span class="eyebrow">${esc(monthsLabel(pollMonths(p)))} · Auswertung live</span><h1>${esc(p.title || 'Event')}</h1></div>`;
+  const hero = `<div class="hero"><span class="eyebrow">${esc(monthsLabel(pollMonths(p)))} · ${ro ? 'Auswahl der anderen' : 'Auswertung live'}</span><h1>${esc(p.title || 'Event')}</h1></div>`;
   // Einfach: nur das Wichtigste (js/ui/overview.js). Ausführlich: alles wie bisher.
   if (simple)
     return (
@@ -83,14 +91,20 @@ export function viewResults() {
   const missing = parts
     .filter(x => !S.responses.some(r => r.uid === x.uid && countsAsDone(p, r)))
     .map(x => personName(x.uid, x.name));
-  h += `<div class="row between">${hero}
+  h += ro
+    ? `<div class="row between">${hero}</div><p class="small muted">Nur zum Ansehen – der Organisator hat für dieses Event freigegeben, dass du siehst, wann die anderen können.</p>`
+    : `<div class="row between">${hero}
      <div class="row">${viewToggle()}<button class="btn sm" data-act="share" data-id="${p.id}">Link teilen</button><button class="btn sm" data-act="message">Nachricht an die Gruppe</button><a class="btn sm" href="#/p/${p.id}">Selbst eintragen</a></div></div>`;
   const cancels = S.responses.filter(r => r.cancel && r.name && p.final && r.cancel.date === p.final.date);
-  h += pendingCard(p);
+  if (!ro) h += pendingCard(p);
   if (p.final)
-    h += `<div class="banner ok"><span>Termin festgelegt: <b>${fmtDate(p.final.date, true)}</b>, ${ivText([p.final.s, p.final.e])}. Deine Freunde sehen ihn mit Kalender-Button.${cancels.length ? `<br><span class="small">Abgesagt: ${cancels.map(r => `${esc(r.name)}${r.cancel.owes ? ` (schuldet ${r.cancel.drinks ? r.cancel.drinks + ' ' : ''}🍹)` : r.cancel.reason === 'sick' ? ' (krank)' : ''}`).join(', ')}</span>` : ''}</span><button class="btn sm" data-act="unfinal">Aufheben</button></div>`;
+    h += ro
+      ? `<div class="banner ok"><span>Termin festgelegt: <b>${fmtDate(p.final.date, true)}</b>, ${ivText([p.final.s, p.final.e])}.</span></div>`
+      : `<div class="banner ok"><span>Termin festgelegt: <b>${fmtDate(p.final.date, true)}</b>, ${ivText([p.final.s, p.final.e])}. Deine Freunde sehen ihn mit Kalender-Button.${cancels.length ? `<br><span class="small">Abgesagt: ${cancels.map(r => `${esc(r.name)}${r.cancel.owes ? ` (schuldet ${r.cancel.drinks ? r.cancel.drinks + ' ' : ''}🍹)` : r.cancel.reason === 'sick' ? ' (krank)' : ''}`).join(', ')}</span>` : ''}</span><button class="btn sm" data-act="unfinal">Aufheben</button></div>`;
   const nExt = activeExts(p).length + (S.passes || []).filter(x => x.until > Date.now()).length;
   const pct = exp ? Math.min(100, Math.round((doneN / exp) * 100)) : 0;
+  const sm = shareMode(p),
+    viewers = viewerList(p);
   h += `<div class="card"><div class="row between" style="align-items:flex-end">
       <div class="row" style="gap:28px"><div class="stat"><b>${doneN}${exp ? `<span class="muted" style="font-size:1rem"> / ${exp}</span>` : ''}</b><span class="small muted">fertig abgestimmt</span></div>
       <div class="stat"><b>${R.all.length - doneN}</b><span class="small muted">tragen noch ein</span></div></div>
@@ -101,11 +115,11 @@ export function viewResults() {
           ? `<div class="banner ok">Full Party! Alle ${exp} haben abgestimmt 🎉 Das Ergebnis ist vollständig.</div>`
           : closed
             ? `<div class="banner info">Die Abstimmung ist beendet${exp ? ` (${doneN} von ${exp} haben abgestimmt)` : ''}. Das Ergebnis ändert sich nicht mehr.</div>`
-            : `<div class="banner warn">Noch nicht vollständig${exp ? `: ${Math.max(0, exp - doneN)} ${exp - doneN === 1 ? 'Antwort fehlt' : 'Antworten fehlen'}` : ''}. Die Ergebnisse können sich noch ändern.${exp ? '' : ' (Lege unter „Bearbeiten“ fest, wie viele abstimmen sollen.)'}</div>`
+            : `<div class="banner warn">Noch nicht vollständig${exp ? `: ${Math.max(0, exp - doneN)} ${exp - doneN === 1 ? 'Antwort fehlt' : 'Antworten fehlen'}` : ''}. Die Ergebnisse können sich noch ändern.${exp || ro ? '' : ' (Lege unter „Bearbeiten“ fest, wie viele abstimmen sollen.)'}</div>`
       }
       ${missing.length && !closed ? `<div class="small">Noch nicht fertig: <b>${esc(missing.join(', '))}</b></div>` : ''}
       ${
-        addedOk(p).length
+        addedOk(p).length && !ro
           ? `<div class="small muted">Von Teilnehmern hinzugefügt: ${addedOk(p)
               .map(
                 a =>
@@ -115,12 +129,19 @@ export function viewResults() {
           : ''
       }
       ${p.reopenedAt ? `<div class="small muted">Neue Runde seit ${timeAgo(p.reopenedAt)}${p.reopenNote ? ` · ${esc(p.reopenNote)}` : ''}. Antworten von davor zählen erst wieder, wenn die Person neu bestätigt.</div>` : ''}
-      <div class="row"><button class="btn sm" data-act="extend-open">${closed ? 'Wieder öffnen / verlängern' : 'Frist & nachträglich öffnen'}</button>${p.final || closed ? `<button class="btn sm" data-act="reopen-open">Neu eröffnen</button>` : ''}${nExt ? `<span class="small muted">${nExt} ${nExt === 1 ? 'Freischaltung' : 'Freischaltungen'} aktiv</span>` : ''}</div>
+      ${
+        ro
+          ? ''
+          : `${sm !== 'none' ? `<div class="small share-line">👀 Antworten sehen auch: <b>${sm === 'all' ? 'alle, die abgestimmt haben' : esc(viewers.map(x => personName(x.uid, x.name)).join(', ') || 'niemand')}</b> <span class="muted">(ändern unter „Bearbeiten“)</span></div>` : ''}
+      <div class="row"><button class="btn sm" data-act="extend-open">${closed ? 'Wieder öffnen / verlängern' : 'Frist & nachträglich öffnen'}</button>${p.final || closed ? `<button class="btn sm" data-act="reopen-open">Neu eröffnen</button>` : ''}${nExt ? `<span class="small muted">${nExt} ${nExt === 1 ? 'Freischaltung' : 'Freischaltungen'} aktiv</span>` : ''}</div>`
+      }
     </div>`;
   if (!R.all.length)
     return (
       h +
-      `<div class="card empty"><h2>Noch keine Antworten</h2><p>Schick den Link an deine Freunde. Neue Antworten erscheinen hier sofort.</p><button class="btn primary" data-act="share" data-id="${p.id}">Link teilen</button></div></div>`
+      (ro
+        ? `<div class="card empty"><h2>Noch keine Antworten</h2><p>Sobald jemand abstimmt, erscheint es hier.</p></div></div>`
+        : `<div class="card empty"><h2>Noch keine Antworten</h2><p>Schick den Link an deine Freunde. Neue Antworten erscheinen hier sofort.</p><button class="btn primary" data-act="share" data-id="${p.id}">Link teilen</button></div></div>`)
     );
   const one = R.sel.length === 1 ? R.resps[0] : null;
   h += `<div class="card"><div class="filters">
@@ -131,7 +152,7 @@ export function viewResults() {
      ${R.resps.some(r => (r.favs || []).length) ? `<div class="row"><span style="font-weight:600">Sortieren nach</span><div class="seg" role="group" aria-label="Sortierung"><button data-act="f-sort" data-v="0" class="${S.filters.sortFav ? '' : 'on'}">Verfügbarkeit</button><button data-act="f-sort" data-v="1" class="${S.filters.sortFav ? 'on' : ''}">⭐ Favoriten</button></div></div>` : ''}
      <label class="check small"><input type="checkbox" id="f-done" ${S.filters.onlyDone ? 'checked' : ''} ${R.sel.length ? 'disabled title="Gilt nicht, solange Personen ausgewählt sind"' : ''}> nur fertige Antworten</label></div></div>`;
   if (R.sel.length)
-    h += `<div class="banner info pick-banner" role="status"><span>${one ? 'Du siehst nur, was' : 'Du siehst nur, wann'} <b>${esc(selNames(R).join(', '))}</b> ${one ? 'eingetragen hat' : 'zusammen können'}. Tagesdetails und „Nachricht an die Gruppe“ zählen weiter alle.</span><button class="btn sm" data-act="pick-clear">Alle anzeigen</button></div>`;
+    h += `<div class="banner info pick-banner" role="status"><span>${one ? 'Du siehst nur, was' : 'Du siehst nur, wann'} <b>${esc(selNames(R).join(', '))}</b> ${one ? 'eingetragen hat' : 'zusammen können'}. ${ro ? 'Tagesdetails zählen weiter alle.' : 'Tagesdetails und „Nachricht an die Gruppe“ zählen weiter alle.'}</span><button class="btn sm" data-act="pick-clear">Alle anzeigen</button></div>`;
   const bestScore = R.ranked.length ? R.ranked[0].score : 0;
   const list = S.showAllDays ? R.ranked : R.ranked.slice(0, 8);
   const ties = R.ranked.length
@@ -142,7 +163,10 @@ export function viewResults() {
     : R.sel.length
       ? 'Beste Tage für die Auswahl'
       : 'Beste Tage';
-  h += `<div class="res-grid"><div class="card"><div class="row between"><h2>${bestTitle}</h2><div class="row"><span class="small muted">${R.ranked.length} passende Tage</span>${ties.length >= 2 && !R.sel.length ? `<button class="btn sm" data-act="dice" title="${ties.length} Tage sind gleich gut">🎲 Auswürfeln</button>` : ''}</div></div>
+  const tapHint = ro
+    ? 'Tippe auf einen Tag, um alle Personen an diesem Tag zu sehen.'
+    : 'Tippe auf einen Tag, um alle Personen an diesem Tag zu sehen und ihn als Termin festzulegen.';
+  h += `<div class="res-grid"><div class="card"><div class="row between"><h2>${bestTitle}</h2><div class="row"><span class="small muted">${R.ranked.length} passende Tage</span>${ties.length >= 2 && !R.sel.length && !ro ? `<button class="btn sm" data-act="dice" title="${ties.length} Tage sind gleich gut">🎲 Auswürfeln</button>` : ''}</div></div>
      ${
        R.ranked.length
          ? `<div class="top">${list.map((d, i) => dayRow(d, R, i === 0 && !one)).join('')}</div>
@@ -151,24 +175,61 @@ export function viewResults() {
      }</div>`;
   const holLegend = `<span><i class="sw" style="background:var(--holiday);border-radius:50%;width:8px;height:8px;border:0"></i>Feiertag</span><span><i class="sw" style="background:var(--ferien);height:4px;border:0"></i>Schulferien</span>`;
   h += one
-    ? `<div class="card"><div class="stack" style="gap:4px"><h2>Kalender von ${esc(one.name)}</h2><p class="small muted">So hat ${esc(one.name)} eingetragen. Tippe auf einen Tag, um alle Personen an diesem Tag zu sehen und ihn als Termin festzulegen.</p></div>
+    ? `<div class="card"><div class="stack" style="gap:4px"><h2>Kalender von ${esc(one.name)}</h2><p class="small muted">So hat ${esc(one.name)} eingetragen. ${tapHint}</p></div>
      <div class="legend"><span><i class="sw" style="background:var(--accent);border-color:var(--accent)"></i>Ganzer Tag</span><span><i class="sw" style="background:var(--accent-soft);border-color:var(--accent)"></i>Mit Uhrzeit</span><span><i class="sw maybe"></i>Vielleicht</span><span><i class="sw" style="background:var(--accent-mid);border:1px dashed var(--accent-mid)"></i>Automatisch (Wiederholung)</span><span><i class="sw" style="background:var(--surface-2)"></i>Kann nicht</span>${holLegend}</div>
      <div class="months">${pollMonths(p)
        .map(k => monthGrid(k, ds => personCell(ds, R, one)))
        .join('')}</div></div></div>`
-    : `<div class="card"><div class="stack" style="gap:4px"><h2>${R.sel.length ? 'Kalender der Auswahl' : 'Kalender'}</h2><p class="small muted">Je dunkler, desto mehr können gleichzeitig. „4+1“ = 4 sicher, 1 vielleicht. Tippe auf einen Tag für Uhrzeiten und um ihn als Termin festzulegen.</p></div>
+    : `<div class="card"><div class="stack" style="gap:4px"><h2>${R.sel.length ? 'Kalender der Auswahl' : 'Kalender'}</h2><p class="small muted">Je dunkler, desto mehr können gleichzeitig. „4+1“ = 4 sicher, 1 vielleicht. ${tapHint}</p></div>
      <div class="legend"><span><i class="sw" style="background:color-mix(in srgb,var(--accent) 25%,var(--surface))"></i>wenige</span><span><i class="sw" style="background:var(--accent)"></i>${R.sel.length ? 'alle Ausgewählten' : 'alle'}</span><span><i class="sw" style="box-shadow:inset 0 0 0 2px var(--fg)"></i>bester Tag</span><span><i class="sw maybe"></i>nur vielleicht</span>${holLegend}</div>
      <div class="months">${pollMonths(p)
        .map(k => monthGrid(k, ds => heatCell(ds, R, bestScore)))
        .join('')}</div></div></div>`;
-  h += `<div class="card"><div class="row between"><h2>Teilnehmer</h2>${isRestricted(p) ? `<span class="small muted">Teilnehmerliste aktiv · ${parts.length} Personen</span>` : ''}</div><div class="people">${[
+  h += `<div class="card"><div class="row between"><h2>Teilnehmer</h2>${isRestricted(p) && !ro ? `<span class="small muted">Teilnehmerliste aktiv · ${parts.length} Personen</span>` : ''}</div><div class="people">${[
     ...R.all,
   ]
     .sort((a, b) => (b.updatedAt || 0) - (a.updatedAt || 0))
-    .map(personRow)
+    .map(r => (ro ? personRowView(r) : personRow(r)))
     .join('')}</div>
-    ${R.outsiders.length ? `<div class="stack" style="gap:6px"><span class="small muted">Nicht auf der Teilnehmerliste (zählen nicht mit):</span>${R.outsiders.map(r => `<div class="rule"><span>${r.emoji ? esc(r.emoji) + ' ' : ''}${esc(r.name)}</span><button class="btn sm" data-act="part-add" data-id="${esc(r.uid)}" data-v="${esc(r.name)}">Zur Liste hinzufügen</button></div>`).join('')}</div>` : ''}</div>`;
+    ${R.outsiders.length && !ro ? `<div class="stack" style="gap:6px"><span class="small muted">Nicht auf der Teilnehmerliste (zählen nicht mit):</span>${R.outsiders.map(r => `<div class="rule"><span>${r.emoji ? esc(r.emoji) + ' ' : ''}${esc(r.name)}</span><button class="btn sm" data-act="part-add" data-id="${esc(r.uid)}" data-v="${esc(r.name)}">Zur Liste hinzufügen</button></div>`).join('')}</div>` : ''}</div>`;
   return h + `</div>`;
+}
+/** Teilnehmer-Zeile zum Nur-Ansehen: Name, Status, Wiederholungen, Favoriten – keine Notizen an den Organisator. */
+export function personRowView(r) {
+  const isMe = B && r.uid === B.uid();
+  const rules = r.rules
+    .map(x => {
+      const t = ruleText(x);
+      return `${x.kind === 'no' ? 'nicht' : 'kann'} ${t.days} ${t.time}${x.label ? ` (${x.label})` : ''}`;
+    })
+    .join(' · ');
+  const stale = isStale(S.poll, r);
+  const status = [stale ? 'muss Neues noch prüfen' : r.done ? 'Fertig' : 'Trägt noch ein', timeAgo(r.updatedAt)]
+    .filter(Boolean)
+    .join(' · ');
+  return `<div class="person"><div class="row" style="flex-wrap:nowrap;min-width:0;flex:1 1 240px"><span class="avatar" style="background:${r.emoji ? 'var(--surface-2)' : colorFor(r.uid)}">${r.emoji ? esc(r.emoji) : esc(initials(r.name))}</span>
+     <div class="stack" style="gap:1px"><span style="font-weight:600">${esc(r.name)}${isMe ? ' <span class="muted small">(du)</span>' : ''}</span>
+     <span class="small muted">${esc(status)}</span>
+     ${rules ? `<span class="small muted">${esc(rules)}</span>` : ''}
+     ${(r.favs || []).length ? `<span class="favline">⭐ ${r.favs.map((ds, i) => `#${i + 1} ${fmtDate(ds)}`).join(' · ')}</span>` : ''}</div></div>
+     <div class="row" style="justify-content:flex-end"><span class="pill ${countsAsDone(S.poll, r) ? 'ok' : 'warn'}">${countsAsDone(S.poll, r) ? '✓' : stale ? '↻' : '…'}</span>
+     <button class="btn sm" data-act="pick-only" data-id="${esc(r.uid)}" aria-label="Kalender von ${esc(r.name)} ansehen">📅 Ansehen</button></div></div>`;
+}
+/** Teilnehmer, die (noch) nicht ansehen dürfen: Hinweis statt Auswertung. */
+export function viewNoAccess() {
+  const p = S.poll,
+    id = (p && p.id) || S.route.id;
+  const voteFirst = p && shareMode(p) === 'all' && !S.answered && !S.viewDenied;
+  return `<div class="wrap">${topbar(`<a class="btn sm ghost" href="#/p/${esc(id)}">← Zur Abstimmung</a>`)}
+    <div class="card empty"><h2>${voteFirst ? 'Erst selbst abstimmen' : 'Nur für Organisatoren'}</h2>
+    <p>${voteFirst ? 'Sobald du eingetragen hast, wann du kannst, siehst du hier, wann die anderen können.' : 'Die Antworten der anderen kann bei diesem Event nur der Organisator sehen.'}</p>
+    <a class="btn primary" href="#/p/${esc(id)}">Zur Abstimmung</a></div></div>`;
+}
+/** Status für Nicht-Organisatoren auf der Auswertungs-Seite: 'loading' | 'ok' | 'no'. */
+export function viewerState() {
+  if (S.poll === undefined || S.answered === undefined) return 'loading';
+  if (!S.poll || S.viewDenied) return 'no';
+  return canSeeOthers(S.poll, B && B.uid(), S.answered) ? 'ok' : 'no';
 }
 export function dayRow(d, R, mvp) {
   const t = d.main,

@@ -3,6 +3,7 @@
 import { createRequire } from 'node:module';
 import { suite, assert } from '../lib/mini-test.js';
 import { ui } from './harness.js';
+import { demoPatch } from './share.ui.js';
 
 const AXE = createRequire(import.meta.url).resolve('axe-core/axe.min.js');
 async function axe(app) {
@@ -64,6 +65,35 @@ suite('UI · Barrierefreiheit', t => {
         opts
       )
     );
+
+  for (const [name, opts] of [
+    ['Auswahl der anderen (Freund, nur ansehen)', {}],
+    ['Auswahl der anderen (Freund, dunkel)', { dark: true }],
+  ])
+    t(
+      `axe: ${name}`,
+      ui(
+        '#/',
+        async app => {
+          await demoPatch(app, "d.polls.demo2.share = 'all';");
+          await app.role('participant');
+          await app.goto('#/p/demo1,demo2/demo2');
+          await axe(app); // mit Hinweis 👀
+          await app.click('.share-note a', 600);
+          await axe(app);
+        },
+        opts
+      )
+    );
+  t(
+    'axe: Formular mit Freigabe „ausgewählte Personen“',
+    ui('#/', async app => {
+      await app.click('[data-act=edit-poll][data-id=demo2]');
+      await app.click('details[data-key=openShare] > summary');
+      await app.click('[data-act=pf-share][data-v=some]');
+      await axe(app);
+    })
+  );
 
   t(
     'Fenster: Fokus hinein, Tab bleibt drin, Esc schließt, Fokus zurück',

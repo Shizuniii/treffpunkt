@@ -8,7 +8,7 @@ import { $, isIOS, isStandalone, timeAgo } from './dom.js';
 import { ACH, LOAD_TXT, achGot } from './fun.js';
 import { unseenNews } from './help.js';
 import { viewHome } from './home.js';
-import { viewResults } from './results.js';
+import { viewNoAccess, viewResults, viewerState } from './results.js';
 import { renderSheet } from './sheets.js';
 import { viewVote } from './vote.js';
 
@@ -23,8 +23,7 @@ export function render() {
   const r = S.route.name;
   if (!B) html += `<div class="wrap"><div class="empty">${LOAD_TXT}</div></div>`;
   else if (r === 'vote') html += viewVote();
-  else if (r === 'results')
-    html += isOwner() ? viewResults() : viewSignIn('Die Auswertung kann nur der Organisator sehen.');
+  else if (r === 'results') html += isOwner() ? viewResults() : viewerResults();
   else html += isOwner() ? viewHome() : viewSignIn();
   const ae = document.activeElement,
     aid = ae && ae.id,
@@ -40,6 +39,15 @@ export function render() {
     }
   }
   renderSheet();
+}
+/** Auswertungs-Seite für Teilnehmer: nur ansehen, wenn freigegeben – sonst Hinweis bzw. Anmeldung für Organisatoren. */
+function viewerResults() {
+  const st = viewerState();
+  if (st === 'loading') return `<div class="wrap"><div class="empty">${LOAD_TXT}</div></div>`;
+  if (st === 'ok') return viewResults();
+  // Freigabe „alle, die abgestimmt haben“, aber noch keine eigene Antwort → erst abstimmen
+  if (S.poll && S.poll.share === 'all' && !S.answered && !S.viewDenied) return viewNoAccess();
+  return viewSignIn('Die Auswertung kann bei diesem Event nur der Organisator sehen.');
 }
 export function demoBar() {
   return `<div class="wrap slim"><div class="demo">

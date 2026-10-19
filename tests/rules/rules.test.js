@@ -143,6 +143,56 @@ describe('Antworten', () => {
 });
 
 /* ======================================================================= */
+describe('Antworten der anderen sehen (pro Event erlaubt)', () => {
+  const both = async () => {
+    await seed('polls/p1/responses/anna', resp());
+    await seed('polls/p1/responses/ben', resp({ name: 'Ben' }));
+  };
+  test('Standard: niemand außer Organisatoren', async () => {
+    await seed('polls/p1', poll());
+    await both();
+    await denied(getDocs(collection(user('anna'), 'polls/p1/responses')));
+    await denied(getDoc(respDoc(user('anna'), 'ben')));
+  });
+  test('„alle, die abgestimmt haben“: mit eigener Antwort ja, ohne nein', async () => {
+    await seed('polls/p1', poll({ share: 'all' }));
+    await both();
+    await allowed(getDocs(collection(user('anna'), 'polls/p1/responses')), 'Anna hat abgestimmt');
+    await allowed(getDoc(respDoc(user('anna'), 'ben')));
+    await denied(getDocs(collection(user('zoe'), 'polls/p1/responses')), 'Zoe hat nur den Link');
+    await denied(getDocs(collection(nobody(), 'polls/p1/responses')));
+  });
+  test('„nur ausgewählte“: nur wer in viewers eingeschaltet ist', async () => {
+    await seed('polls/p1', poll({ share: 'some', viewers: { anna: { on: true, name: 'Anna' }, ben: { on: false } } }));
+    await both();
+    await allowed(getDocs(collection(user('anna'), 'polls/p1/responses')));
+    await denied(getDocs(collection(user('ben'), 'polls/p1/responses')), 'Ben ist ausgeschaltet');
+    await allowed(getDoc(respDoc(user('ben'), 'ben')), 'die eigene Antwort weiter');
+    await denied(getDocs(collection(user('zoe'), 'polls/p1/responses')));
+  });
+  test('Freigabe gilt nur für dieses Event und nur zum Lesen', async () => {
+    await seed('polls/p1', poll({ share: 'all' }));
+    await seed('polls/p2', poll());
+    await both();
+    await seed('polls/p2/responses/anna', resp());
+    await seed('polls/p2/responses/ben', resp({ name: 'Ben' }));
+    await denied(getDocs(collection(user('anna'), 'polls/p2/responses')), 'anderes Event');
+    await denied(setDoc(respDoc(user('anna'), 'ben'), resp({ name: 'Hack' })), 'fremde Antwort ändern');
+    await denied(deleteDoc(respDoc(user('anna'), 'ben')), 'fremde Antwort löschen');
+  });
+  test('nur Organisatoren ändern die Freigabe', async () => {
+    await seed('polls/p1', poll());
+    await both();
+    await denied(updateDoc(doc(user('anna'), 'polls/p1'), { share: 'all' }));
+    await denied(
+      updateDoc(doc(user('anna'), 'polls/p1'), { share: 'some', viewers: { anna: { on: true } } }),
+      'sich selbst freischalten'
+    );
+    await allowed(updateDoc(doc(owner(), 'polls/p1'), { share: 'all' }));
+  });
+});
+
+/* ======================================================================= */
 describe('Frist, Freischaltung und Nachzügler-Link', () => {
   test('geschlossen oder Frist abgelaufen: keine Änderungen mehr', async () => {
     await seed('polls/p1', poll({ closed: true }));

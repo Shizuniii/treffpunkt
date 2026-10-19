@@ -5,7 +5,7 @@ import { flushSave, pushUndo, scheduleSave } from './save.js';
 import { B, S, TODAY } from './state.js';
 import { effective, eqDay } from '../core/availability.js';
 import { daysOfMonths, parseYmd, strMin, wdIdx } from '../core/dates.js';
-import { isEmptyResp, maybeLimit, pollDays, pollMonths } from '../core/poll.js';
+import { isEmptyResp, maybeLimit, pollDays, pollMonths, shareMode, viewerList } from '../core/poll.js';
 import { clone, rid } from '../core/util.js';
 import { $, toast } from '../ui/dom.js';
 import { checkMaybeAch, confetti, unlock } from '../ui/fun.js';
@@ -299,6 +299,10 @@ export async function savePollForm() {
     toast('Wähle mindestens eine Person für die Teilnehmerliste');
     return;
   }
+  if (f.share === 'some' && !viewerList(f).length) {
+    toast('Wähle mindestens eine Person, die die Antworten sehen darf');
+    return;
+  }
   const months = [...f.months].sort();
   const data = {
     title: f.title.trim().slice(0, 80),
@@ -312,6 +316,8 @@ export async function savePollForm() {
     addMode: f.addMode,
     restricted: !!f.restricted,
     participants: f.participants,
+    share: shareMode(f),
+    viewers: f.viewers || {},
     expected: f.restricted ? partOn(f) : exp > 0 ? exp : null,
     updatedAt: Date.now(),
   };

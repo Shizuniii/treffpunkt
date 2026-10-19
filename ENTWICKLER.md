@@ -188,9 +188,13 @@ polls/{pid}                         ein Event (lesbar für alle mit Link)
   added {uid: {from, to, name, at, ok, declined}}
   restricted(bool), participants {uid: {on, name}}
   extensions {uid: {until, ask}}              persönliche Freischaltungen
+  share 'none'|'all'|'some', viewers {uid: {on, name}}
+                                              wer die Antworten der anderen sehen darf (canSeeOthers in
+                                              js/core/poll.js = gleiche Logik wie firestore.rules)
   reopenedAt, reopenNote, expandedAt, history[]
 
-polls/{pid}/responses/{uid}         Antwort einer Person (nur sie selbst + Organisator)
+polls/{pid}/responses/{uid}         Antwort einer Person (sie selbst + Organisator; lesen auch, wen share erlaubt –
+                                    note/cancel.note sind dann technisch mitlesbar, die App zeigt sie nur Organisatoren)
   v:2, name, emoji, base 'none'|'all', done, updatedAt, note
   days {"YYYY-MM-DD": {s, e, m?:1} | {n:1}}    m = vielleicht, n = kann nicht
   rules [{id, kind 'yes'|'no', wd[], s, e, label}]

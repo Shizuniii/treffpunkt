@@ -2,7 +2,7 @@
 import { loadCopyCands } from './copy.js';
 import { flushSave } from './save.js';
 import { B, S, TODAY, isOwner, lsGet, lsSet, refreshToday } from './state.js';
-import { normResp } from '../core/poll.js';
+import { canSeeOthers, normResp } from '../core/poll.js';
 import { pollSummary } from '../core/results.js';
 import { fullPartyFx } from '../ui/fun.js';
 import { loadPeople } from '../ui/period.js';
@@ -55,6 +55,8 @@ export async function loadRoute() {
     responses: [],
     my: null,
     myAll: {},
+    answered: undefined, // Teilnehmer in der Auswertung: hat selbst schon eine Antwort?
+    viewDenied: false,
     loadErr: null,
     sheet: null,
     editPoll: null,
@@ -135,7 +137,7 @@ export async function loadRoute() {
       render();
       loadCopyCands(seq);
     } else if (r.name === 'results') {
-      if (!isOwner()) return render();
+      if (!isOwner()) return await loadViewer(seq, r, fail);
       unsubs.push(
         B.watchPoll(
           r.id,
@@ -229,4 +231,50 @@ export async function refreshCounts() {
     countsBusy = false;
   }
   if (S.route.name === 'home') render();
+}
+
+/**
+ * Auswertung für Teilnehmer (nur ansehen) – wenn der Organisator es für dieses Event erlaubt hat.
+ * Die Firestore-Regeln prüfen dasselbe noch einmal; ohne Erlaubnis kommen keine Antworten an.
+ */
+async function loadViewer(seq, r, fail) {
+  await B.ensureUser();
+  if (seq !== loadSeq) return;
+  const mine = await B.getMine(r.id).catch(() => null);
+  if (seq !== loadSeq) return;
+  S.my = normResp(mine);
+  S.answered = !!mine;
+  let watching = false;
+  unsubs.push(
+    B.watchPoll(
+      r.id,
+      p => {
+        S.poll = p;
+        if (p && !watching && canSeeOthers(p, B.uid(), S.answered)) {
+          watching = true;
+          S.viewDenied = false;
+          unsubs.push(
+            B.watchResponses(
+              r.id,
+              rs => {
+                S.responses = rs.map(normResp);
+                render();
+              },
+              e => {
+                // z. B. Freigabe wurde gerade zurückgenommen
+                console.warn(e);
+                if (seq !== loadSeq) return;
+                S.viewDenied = true;
+                S.responses = [];
+                watching = false;
+                render();
+              }
+            )
+          );
+        }
+        render();
+      },
+      fail
+    )
+  );
 }

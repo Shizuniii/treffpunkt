@@ -1,7 +1,7 @@
 /* Vorlagen für neue Events und „Nochmal mit neuem Zeitraum“ (rein, ohne DOM).
    Eine Vorlage speichert Einstellungen, aber keine festen Daten: Monate und Frist werden relativ zu „heute“ gesetzt. */
 import { addDays, daysOfMonths, monthKey, parseYmd, toYmd } from './dates.js';
-import { maybeLimit } from './poll.js';
+import { maybeLimit, shareMode } from './poll.js';
 import { clone } from './util.js';
 
 const ALL_DAYS = [0, 1, 2, 3, 4, 5, 6];
@@ -77,6 +77,8 @@ export function templateFromPoll(p, name) {
     cancelRule: p.cancelRule !== false,
     restricted: !!p.restricted,
     participants: clone(p.participants || {}),
+    share: shareMode(p),
+    viewers: clone(p.viewers || {}),
   };
 }
 
@@ -95,11 +97,14 @@ export function formFromTemplate(t, today) {
     excluded: [],
     restricted: !!t.restricted,
     participants: clone(t.participants || {}),
+    share: shareMode(t),
+    viewers: clone(t.viewers || {}),
     addMode: t.addMode || 'auto',
     rangeFrom: '',
     rangeTo: '',
     openExcl: false,
     openPeople: false,
+    openShare: false,
     dlOn: !!dl,
     dlDate: dl,
     dlTime: '',

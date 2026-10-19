@@ -13,6 +13,9 @@ import {
   addRangeToForm,
   maybeLimit,
   addedOk,
+  canSeeOthers,
+  shareMode,
+  viewerList,
 } from '../../js/core/poll.js';
 
 suite('Event-Regeln', t => {
@@ -84,5 +87,19 @@ suite('Event-Regeln', t => {
     assert.no(f.excluded.includes('2026-11-20'), 'im Zeitraum wieder eingeschlossen');
     assert.ok(f.excluded.includes('2026-12-04'), 'neuer Monat nur im Zeitraum');
     assert.no(f.excluded.includes('2026-12-02'));
+  });
+
+  t('Antworten der anderen sehen: wie in firestore.rules', () => {
+    assert.eq(shareMode({}), 'none', 'Standard');
+    assert.eq(shareMode({ share: 'kaputt' }), 'none');
+    assert.no(canSeeOthers({}, 'anna', true), 'Standard: niemand');
+    const all = { share: 'all' };
+    assert.ok(canSeeOthers(all, 'anna', true), 'hat abgestimmt');
+    assert.no(canSeeOthers(all, 'anna', false), 'nur den Link');
+    const some = { share: 'some', viewers: { anna: { on: true, name: 'Anna' }, ben: { on: false } } };
+    assert.ok(canSeeOthers(some, 'anna', false), 'ausgewählt – auch ohne eigene Antwort');
+    assert.no(canSeeOthers(some, 'ben', true), 'ausgeschaltet');
+    assert.no(canSeeOthers(some, 'zoe', true));
+    assert.deep(viewerList(some), [{ uid: 'anna', name: 'Anna' }]);
   });
 });

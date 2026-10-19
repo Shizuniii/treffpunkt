@@ -17,7 +17,16 @@ import {
   toYmd,
   ymd,
 } from '../core/dates.js';
-import { addedList, isRestricted, maybeLimit, partList, pollClosed, pollMonths } from '../core/poll.js';
+import {
+  addedList,
+  isRestricted,
+  maybeLimit,
+  partList,
+  pollClosed,
+  pollMonths,
+  shareMode,
+  viewerList,
+} from '../core/poll.js';
 import { clone, esc } from '../core/util.js';
 import { LOAD_TXT } from './fun.js';
 import { quickstartRow } from './organizers.js';
@@ -110,11 +119,14 @@ export function pollToForm(p, asCopy) {
     excluded: [...((p && p.excluded) || [])],
     restricted: !!(p && p.restricted),
     participants: clone((p && p.participants) || {}),
+    share: shareMode(p),
+    viewers: clone((p && p.viewers) || {}),
     addMode: (p && p.addMode) || 'auto',
     rangeFrom: '',
     rangeTo: '',
     openExcl: false,
     openPeople: false,
+    openShare: false,
     dlOn: asCopy ? false : dlOn,
     dlDate: asCopy ? '' : dlDate,
     dlTime: asCopy ? '' : dlTime,
@@ -160,6 +172,7 @@ export function pollForm() {
       <div class="chips">${WD_SHORT.map((w, i) => `<button class="chip ${e.weekdays.includes(i) ? 'on' : ''}" data-act="pf-wd" data-v="${i}" aria-pressed="${e.weekdays.includes(i)}">${w}</button>`).join('')}</div>
       <span class="small muted">Nicht gewählte Wochentage sind für deine Freunde ausgegraut.</span></div>
     ${peopleSection(e)}
+    ${shareSection(e)}
     <div class="stack" style="gap:8px"><label class="check"><input type="checkbox" id="pf-dl-on" ${e.dlOn ? 'checked' : ''}> Abstimmungsfrist festlegen</label>
       ${
         e.dlOn
@@ -215,12 +228,47 @@ export function exclGrid(k, ex) {
   }
   return `<section class="month"><h3>${MONTHS[m - 1]} ${y}</h3><div class="xgrid"><span></span>${WD_SHORT.map((w, i) => `<button class="xwk" data-act="ex-wd" data-m="${k}" data-v="${i}" aria-label="Alle ${WD_LONG[i]}e im ${MONTHS[m - 1]} umschalten">${w}</button>`).join('')}${rows}</div></section>`;
 }
-export function peopleSection(e) {
+/** Alle bekannten Personen (aus allen Events) plus die schon im Formular stehen – für Teilnehmerliste und Freigabe. */
+function knownPeople(...maps) {
   const known = [...(S.people || [])];
+  for (const m of maps)
+    for (const [uid, x] of Object.entries(m || {}))
+      if (!known.some(k => k.uid === uid)) known.push({ uid, name: (x && x.name) || 'Unbekannt', emoji: '' });
+  return known;
+}
+export const SHARE_LABEL = {
+  none: 'nur Organisatoren',
+  all: 'alle, die abgestimmt haben',
+  some: 'ausgewählte Personen',
+};
+export function shareSection(e) {
+  const me = B && B.uid();
+  const known = knownPeople(e.participants, e.viewers)
+    .filter(x => x.uid !== me) // Organisatoren sehen ohnehin alles
+    .sort((a, b) => a.name.localeCompare(b.name, 'de'));
+  const n = viewerList(e).length;
+  const opt = (v, label) =>
+    `<button data-act="pf-share" data-v="${v}" class="${e.share === v ? 'on' : ''}" aria-pressed="${e.share === v}">${label}</button>`;
+  return `<details class="adv" data-key="openShare" ${e.openShare ? 'open' : ''}><summary><span>Wer sieht die Antworten der anderen?</span><span class="small muted">${e.share === 'some' ? `${n} ${n === 1 ? 'Person' : 'Personen'}` : SHARE_LABEL[e.share]}</span></summary>
+    <div class="stack"><div class="seg full three" role="group" aria-label="Wer sieht die Antworten der anderen">${opt('none', 'Organisatoren')}${opt('all', 'Alle Teilnehmer')}${opt('some', 'Ausgewählte')}</div>
+    <span class="small muted">${
+      e.share === 'none'
+        ? 'Jeder sieht nur die eigene Antwort. Du und deine Mitorganisatoren seht alle.'
+        : e.share === 'all'
+          ? 'Wer selbst abgestimmt hat, kann die Auswertung ansehen: wer wann kann, auch einzeln pro Person. Ändern, festlegen oder löschen kann nur ihr Organisatoren.'
+          : 'Nur die Personen, die du antippst, können die Auswertung ansehen. Ändern, festlegen oder löschen kann nur ihr Organisatoren.'
+    }${e.share !== 'none' ? ' Alle Teilnehmer sehen beim Abstimmen einen Hinweis darauf.' : ''}</span>
+    ${
+      e.share === 'some'
+        ? `<div class="chips">${known.map(x => `<button class="chip ${e.viewers[x.uid] && e.viewers[x.uid].on ? 'on' : ''}" data-act="pf-viewer" data-id="${esc(x.uid)}" data-v="${esc(x.name)}" aria-pressed="${!!(e.viewers[x.uid] && e.viewers[x.uid].on)}">${x.emoji ? esc(x.emoji) + ' ' : ''}${esc(x.name)}</button>`).join('')}</div>
+      <span class="small muted">${known.length ? 'Die Liste kommt aus allen bisherigen Antworten in deinen Events.' : 'Noch niemand bekannt. Sobald jemand in einem deiner Events abgestimmt hat, kannst du ihn hier auswählen.'}${S.people === null ? ' Lädt …' : ''}</span>`
+        : ''
+    }</div></details>`;
+}
+export function peopleSection(e) {
+  const known = knownPeople(e.participants);
   const me = B && B.uid();
   if (me && !known.some(x => x.uid === me)) known.unshift({ uid: me, name: 'Du (Organisator)', emoji: '' });
-  for (const [uid, x] of Object.entries(e.participants || {}))
-    if (!known.some(k => k.uid === uid)) known.push({ uid, name: x.name || 'Unbekannt', emoji: '' });
   known.sort((a, b) => (a.uid === me ? -1 : b.uid === me ? 1 : a.name.localeCompare(b.name)));
   return `<details class="adv" data-key="openPeople" ${e.openPeople ? 'open' : ''}><summary><span>Wer darf abstimmen?</span><span class="small muted">${e.restricted ? `${partOn(e)} ausgewählt` : 'alle mit dem Link'}</span></summary>
     <div class="stack"><div class="seg full" role="group" aria-label="Wer darf abstimmen"><button data-act="pf-restr" data-v="0" class="${e.restricted ? '' : 'on'}">Alle mit dem Link</button><button data-act="pf-restr" data-v="1" class="${e.restricted ? 'on' : ''}">Nur ausgewählte Personen</button></div>

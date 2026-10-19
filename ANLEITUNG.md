@@ -36,7 +36,7 @@ Links **Build → Authentication → Jetzt starten**, dann Tab **Sign-in method*
 3. Tab **Regeln** → alles löschen → Inhalt von `firestore.rules` einfügen → **Veröffentlichen**.
    (Mit Teil B passiert das künftig automatisch.)
 
-Die Regeln sorgen dafür, dass jeder Freund nur seine eigene Antwort sieht, nur Organisatoren alle Antworten sehen, nach Fristende niemand mehr ändern kann und private Daten (Event-Liste, Benachrichtigungs-Einstellungen) nur für die Person selbst lesbar sind. Deine E-Mail-Adresse steht seit Version 3 **nicht mehr** in `firestore.rules` – die Datei kann also bedenkenlos auf GitHub.
+Die Regeln sorgen dafür, dass jeder Freund nur seine eigene Antwort ändern kann und nur seine eigene sieht (außer du gibst bei einem Event frei, dass andere sie ansehen dürfen), Organisatoren alle Antworten sehen, nach Fristende niemand mehr ändern kann und private Daten (Event-Liste, Benachrichtigungs-Einstellungen) nur für die Person selbst lesbar sind. Deine E-Mail-Adresse steht seit Version 3 **nicht mehr** in `firestore.rules` – die Datei kann also bedenkenlos auf GitHub.
 
 ### A4. Web-App registrieren
 1. **Zahnrad → Projekteinstellungen** (oder oben in der Suche „Allgemein“ wählen) → Tab **Allgemein** → ganz unten bei **Meine Apps** auf **`</>`** (Web).
@@ -179,6 +179,7 @@ Wer die App offen hat, sieht „Eine neue Version ist da“; alle anderen bekomm
 
 ## Organisator-Werkzeuge
 - **Einfach / Ausführlich** (oben auf Startseite und Auswertung): Einfach zeigt pro Event nur Fortschritt, wer fehlt, die besten Tage und was auf dich wartet. Ausführlich zeigt alles.
+- **Antworten freigeben** (beim Event unter **Bearbeiten → Wer sieht die Antworten der anderen?**): alle Teilnehmer, die abgestimmt haben, oder nur ausgewählte Personen dürfen die Auswertung ansehen – nicht ändern. Alle Teilnehmer sehen dann beim Abstimmen einen Hinweis 👀.
 - **Personen ansehen** (Auswertung → Ausführlich): eine oder mehrere Personen antippen. Bei einer Person siehst du ihren Kalender genau so, wie sie ihn ausgefüllt hat; bei mehreren, wann genau diese zusammen können. In der Teilnehmerliste geht das auch über **📅 Ansehen**. „Alle anzeigen“ hebt die Auswahl auf.
 - **Schnellstart & Vorlagen:** beim neuen Event Spieleabend, Kino, Ausflug, Gruppenurlaub oder eigene Vorlagen. Unter **Mehr …** eines Events: **Nochmal mit neuem Zeitraum** oder **Als Vorlage speichern**.
 - **👥 Organisatoren** (unten auf der Startseite, optional): Mitorganisatoren per Google-Adresse hinzufügen oder die Leitung übergeben.

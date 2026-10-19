@@ -7,13 +7,14 @@ import { DEFAULT_FILTERS } from '../core/results.js';
    Datenformat (Firestore):
      polls/{pid}                 Abstimmung = ein Event (öffentlich lesbar mit Link)
        title, description, months[], expected, closed, closesAt(ms|null),
-       maybeLimit(Zahl), weekdays([0..6]|null, 0 = Montag), final({date,s,e}|null)
-     polls/{pid}/responses/{uid} Antwort einer Person (nur sie selbst + Organisator)
+       maybeLimit(Zahl), weekdays([0..6]|null, 0 = Montag), final({date,s,e}|null),
+       share('none'|'all'|'some'), viewers{uid:{on,name}}  – wer die Antworten der anderen sehen darf
+     polls/{pid}/responses/{uid} Antwort einer Person (sie selbst + Organisator; lesen auch, wen share erlaubt)
        v:2, name, base('none'|'all'), days{ 'YYYY-MM-DD': {s,e,m?} | {n:1} }, rules[], done, note
      members/{uid}               privat, nur die Person selbst: name, polls{pid:{t,at}}
    Ältere Antworten (v1) bleiben gültig: v2 hat nur Felder ergänzt.
    ===================================================================== */
-export const APP_VERSION = '3.1.0';
+export const APP_VERSION = '3.2.0';
 export const CFG = window.TREFFPUNKT_CONFIG || {};
 /** Demo-Modus: solange config.js noch Platzhalter hat – oder jederzeit mit ?demo in der Adresse
     (z. B. https://…/treffpunkt/?demo). Dann wird nie mit Firebase gesprochen, alles bleibt in diesem Browser. */

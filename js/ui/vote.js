@@ -10,6 +10,7 @@ import { WD_SHORT, deadlineText, fmtDate, monthsLabel, rangeText, remainText } f
 import {
   addedOk,
   allowedWd,
+  canSeeOthers,
   inPoll,
   isEmptyResp,
   isRestricted,
@@ -18,6 +19,7 @@ import {
   pollClosed,
   pollDays,
   pollMonths,
+  shareMode,
   startOf,
 } from '../core/poll.js';
 import { esc } from '../core/util.js';
@@ -28,6 +30,19 @@ import { EMOJIS, LOAD_TXT } from './fun.js';
 import { footer, topbar } from './render.js';
 
 /* ---------- Abstimmen ---------- */
+/** Hinweis, wenn der Organisator anderen erlaubt, die Antworten zu sehen – plus Knopf für alle, die es dürfen. */
+export function shareNote(p, me) {
+  const mode = shareMode(p);
+  if (mode === 'none' || isOwner()) return '';
+  const can = canSeeOthers(p, B && B.uid(), !!me.updatedAt);
+  const text =
+    mode === 'all'
+      ? 'Bei diesem Event sehen alle, die abgestimmt haben, wann die anderen können – also auch deine Tage.'
+      : can
+        ? 'Der Organisator hat dir erlaubt zu sehen, wann die anderen können. Ein paar ausgewählte Personen sehen auch deine Tage.'
+        : 'Bei diesem Event sehen ein paar vom Organisator ausgewählte Personen, wann die anderen können – also auch deine Tage.';
+  return `<div class="banner info share-note"><span>👀 ${text}${mode === 'all' && !can ? ' Sobald du etwas eingetragen hast, siehst du es auch.' : ''}</span>${can ? `<a class="btn sm" href="#/r/${esc(p.id)}">Auswahl der anderen ansehen</a>` : ''}</div>`;
+}
 export function viewVote() {
   const p = S.poll,
     me = S.my;
@@ -61,6 +76,7 @@ export function viewVote() {
     h += `<div class="banner info">Für alle anderen ist die Abstimmung zu. Als Organisator kannst du trotzdem ändern.</div>`;
   else if (ext && ext.ask)
     h += `<div class="banner ok"><span>Der Organisator bittet dich, deine Auswahl nochmal zu prüfen 🙏 (Zeit bis ${deadlineText(ext.until, true)})</span></div>`;
+  h += shareNote(p, me);
   const news = closed ? [] : newsFor(p, me);
   if (news.length)
     h += `<div class="card offer"><b>Neu seit deiner letzten Antwort</b><ul class="news">${news.map(x => `<li>${x}</li>`).join('')}</ul>
